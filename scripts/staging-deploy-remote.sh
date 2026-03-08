@@ -17,11 +17,16 @@ echo "=== Updating API (preserve .venv) ==="
 (cd repo/api && tar cf - .) | (cd "$APP_ROOT/api" && tar xf -)
 cd "$APP_ROOT/api"
 .venv/bin/pip install -e . -q
-echo "Stopping old API (if any)..."
-pkill -f "uvicorn app.main:app" 2>/dev/null || true
-sleep 1
-mkdir -p "$APP_ROOT/logs"
-nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/logs/api.log" 2>&1 &
+if [ -f /etc/systemd/system/tttc-api.service ]; then
+  echo "Restarting API (systemd)..."
+  sudo systemctl restart tttc-api
+else
+  echo "Stopping old API (if any)..."
+  pkill -f "uvicorn app.main:app" 2>/dev/null || true
+  sleep 1
+  mkdir -p "$APP_ROOT/logs"
+  nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/logs/api.log" 2>&1 &
+fi
 echo "API started (port 8000)."
 
 cd "$APP_ROOT"
@@ -35,10 +40,15 @@ cp -r repo/web "$APP_ROOT/web"
 cd "$APP_ROOT/web"
 npm install --silent
 npm run build
-echo "Stopping old frontend (if any)..."
-pkill -f "vite preview" 2>/dev/null || true
-sleep 1
-nohup npm run preview:staging >> "$APP_ROOT/logs/web.log" 2>&1 &
+if [ -f /etc/systemd/system/tttc-web.service ]; then
+  echo "Restarting frontend (systemd)..."
+  sudo systemctl restart tttc-web
+else
+  echo "Stopping old frontend (if any)..."
+  pkill -f "vite preview" 2>/dev/null || true
+  sleep 1
+  nohup npm run preview:staging >> "$APP_ROOT/logs/web.log" 2>&1 &
+fi
 echo "Frontend started (port 5173)."
 
 echo ""

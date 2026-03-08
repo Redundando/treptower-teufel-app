@@ -1,0 +1,19 @@
+[Unit]
+Description=TTTC Web (Vite preview)
+After=network.target tttc-api.service
+
+[Service]
+Type=simple
+User=arved
+Group=arved
+WorkingDirectory=/srv/tttc/app/web
+ExecStart=/usr/bin/npm run preview:staging
+# If npm is elsewhere (e.g. nvm), use: ExecStart=/home/arved/.nvm/versions/node/.../bin/npm run preview:staging
+Restart=on-failure
+RestartSec=5
+# npm needs a proper PATH and possibly HOME
+Environment=NODE_ENV=production
+Environment=PATH=/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target

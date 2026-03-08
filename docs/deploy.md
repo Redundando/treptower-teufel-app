@@ -199,11 +199,15 @@ To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (
 
 ---
 
-## 9. Caddy (HTTPS on staging)
+## 9. systemd (API + web as services, optional)
+
+So the API and frontend start on boot and you can use `systemctl restart`. One-time setup on the server: **[docs/systemd-staging.md](./systemd-staging.md)**. After that, the deploy script will use `systemctl restart` instead of nohup.
+
+## 10. Caddy (HTTPS on staging)
 
 Once DNS for `staging-app` and `staging-api` points to the server, use Caddy for HTTPS. Step-by-step: **[docs/caddy-staging.md](./caddy-staging.md)**.
 
-## 10. Quick reference
+## 11. Quick reference
 
 | Action | Where to look |
 |--------|----------------|
@@ -212,6 +216,7 @@ Once DNS for `staging-app` and `staging-api` points to the server, use Caddy for
 | Repo URL, branch | This doc §2 |
 | Deploy target paths | This doc §3 |
 | Manual deploy steps | This doc §5 |
+| systemd (optional) | [systemd-staging.md](./systemd-staging.md) |
 | Caddy / HTTPS staging | [caddy-staging.md](./caddy-staging.md) |
 
 ---
