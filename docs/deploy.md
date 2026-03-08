@@ -51,7 +51,74 @@ Below is the intended flow and manual steps. When we add scripts (e.g. `ops/depl
 
 ---
 
-## 5. Staging deploy — manual steps
+## 5. First deploy: “Hello world” on staging
+
+Use this checklist once to get the API and frontend running on staging. **Prerequisite:** Latest code pushed to `main`; you have the staging DB password for `tttc_staging_user`.
+
+**On your machine (once):** Push any uncommitted changes and ensure `main` is up to date.
+
+**On the server (SSH in and run in order):**
+
+1. **Dirs and clone**
+   ```bash
+   sudo mkdir -p /srv/tttc/app
+   sudo chown arved:arved /srv/tttc/app
+   cd /srv/tttc/app
+   git clone https://github.com/Redundando/treptower-teufel-app.git repo
+   ```
+
+2. **Open firewall for API and frontend**
+   ```bash
+   sudo ufw allow 8000/tcp
+   sudo ufw allow 5173/tcp
+   sudo ufw status
+   ```
+
+3. **API: copy, venv, env**
+   ```bash
+   cp -r repo/api /srv/tttc/app/
+   cd /srv/tttc/app/api
+   python3 -m venv .venv
+   .venv/bin/pip install -e .
+   mkdir -p /srv/tttc/app/env
+   ```
+   Create `/srv/tttc/app/env/api.env` with one line (use your real staging DB password):
+   ```bash
+   echo 'DATABASE_URL=postgresql://tttc_staging_user:YOUR_STAGING_PASSWORD@localhost:5432/tttc_staging' | nano /srv/tttc/app/env/api.env
+   ```
+   (Or edit with `nano /srv/tttc/app/env/api.env` and paste the line.)
+
+4. **Run API in the background**
+   ```bash
+   cd /srv/tttc/app/api
+   nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /srv/tttc/app/logs/api.log 2>&1 &
+   ```
+   Create logs dir if needed: `mkdir -p /srv/tttc/app/logs`.  
+   Check: `curl -s http://localhost:8000/health` → `{"status":"ok"}`.
+
+5. **Frontend: copy, install, build**
+   ```bash
+   cp -r repo/web /srv/tttc/app/
+   cd /srv/tttc/app/web
+   npm install
+   npm run build
+   ```
+
+6. **Run frontend preview (serves `dist/` and proxies `/api` to the API)**
+   ```bash
+   cd /srv/tttc/app/web
+   nohup npm run preview:staging > /srv/tttc/app/logs/web.log 2>&1 &
+   ```
+   Check: `curl -s http://localhost:5173` → HTML.
+
+7. **In your browser**
+   Open **http://46.225.208.231:5173** — you should see “Hello, Treptower Teufel” and “API: ok”.
+
+To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (or find PIDs with `ps aux | grep uvicorn` / `ps aux | grep vite`).
+
+---
+
+## 6. Staging deploy — manual steps (reference)
 
 ### First time (clone and one-time setup)
 
@@ -112,7 +179,7 @@ Below is the intended flow and manual steps. When we add scripts (e.g. `ops/depl
 
 ---
 
-## 6. Env and secrets on the server
+## 7. Env and secrets on the server
 
 - Env files live under **`/srv/tttc/app/env/`** (e.g. `api.env`).
 - They are **created and edited on the server** (or via a secure deploy step), **never** committed.
@@ -120,7 +187,7 @@ Below is the intended flow and manual steps. When we add scripts (e.g. `ops/depl
 
 ---
 
-## 7. Future: deploy scripts and production
+## 8. Future: deploy scripts and production
 
 - **Deploy scripts:** When we add them (e.g. under `ops/deploy/`), they will:
   - Pull from Git (or use a specific ref).
@@ -130,7 +197,7 @@ Below is the intended flow and manual steps. When we add scripts (e.g. `ops/depl
 
 ---
 
-## 8. Quick reference
+## 9. Quick reference
 
 | Action | Where to look |
 |--------|----------------|

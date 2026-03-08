@@ -12,7 +12,7 @@ Env strategy is in [env-and-secrets.md](./env-and-secrets.md); this doc is the s
 | **Git** | Clone repo, branches | — |
 | **Python 3.12+** | Backend (FastAPI) | From [python.org](https://www.python.org/downloads/) or Chocolatey. |
 | **PostgreSQL** | Local database | From [postgresql.org](https://www.postgresql.org/download/windows/). Add `bin` to PATH (e.g. `C:\Program Files\PostgreSQL\18\bin`). |
-| **Node.js** (later) | Frontend tooling | When we add the web app. |
+| **Node.js** | Frontend (Vite + Svelte) | From [nodejs.org](https://nodejs.org/) or Chocolatey. |
 
 ---
 
@@ -95,17 +95,31 @@ uvicorn app.main:app --reload
 - **DB check:** http://127.0.0.1:8000/db  
 - **API docs:** http://127.0.0.1:8000/docs  
 
-More detail in [api/README.md](../api/README.md).
+More detail in [api/README.md](../api/README.md).  
+If you run the API on another port (e.g. 8001), set the proxy target in `web/vite.config.ts` to match.
 
 ---
 
-## 6. Frontend (when we add it)
+## 6. Run the frontend (web)
 
-When the `web/` app exists, the doc will be updated with:
+**One-time setup:**
 
-- Node version and install
-- `npm install` / `pnpm install` in `web/`
-- `npm run dev` (or equivalent) and which URL to open
+```powershell
+cd web
+npm install
+```
+
+**Start the dev server:**
+
+```powershell
+cd web
+npm run dev
+```
+
+- **App:** http://localhost:5173  
+- The page shows “Hello, Treptower Teufel” and calls the API `/health` via a proxy. The API must be running on port 8000 (or change `web/vite.config.ts` proxy target to your port).
+
+**Build for production:** `npm run build` → output in `web/dist/`.
 
 ---
 
@@ -117,6 +131,7 @@ When the `web/` app exists, the doc will be updated with:
 | **`WinError 10013`** when starting uvicorn | Port 8000 is in use or blocked. Use another port: `--port 8001` (and open http://127.0.0.1:8001/...). Or free 8000: `netstat -ano \| findstr :8000` then `taskkill /PID <pid> /F`. |
 | **`/db` returns “password authentication failed for user tttc_dev_user”** | The password in `.env` must match the one you set for `tttc_dev_user` in PostgreSQL. Fix either the DB password or `DATABASE_URL` in `.env`. |
 | **`.env` not loaded** | Run uvicorn from the **project root** with `--app-dir api`, or run from inside `api/` (config looks for `.env` in the parent directory). |
+| **Frontend shows “API: offline”** | Start the API first (port 8000, or update the proxy in `web/vite.config.ts`). |
 
 ---
 
