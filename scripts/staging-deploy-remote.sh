@@ -25,6 +25,10 @@ nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/lo
 echo "API started (port 8000)."
 
 echo "=== Updating web ==="
+if [ ! -d "$APP_ROOT/repo/web" ]; then
+  echo "repo/web not found. Ensure web/ is committed and pushed, then on server: cd /srv/tttc/app/repo && git pull origin main"
+  exit 1
+fi
 rm -rf "$APP_ROOT/web"
 cp -r repo/web "$APP_ROOT/web"
 cd "$APP_ROOT/web"
