@@ -1,0 +1,1052 @@
+# Treptower Teufel Club App / Mitglieder-Backend
+Stand: 2026-03-08
+
+## Zweck dieses Dokuments
+
+Dieses Dokument fasst die bisherige Grundidee, Architektur-Philosophie, Hosting-Entscheidungen, den aktuellen Stand des Staging-Servers und die offenen nächsten Schritte zusammen.
+
+Ziel ist, später lokal im Projekt eine belastbare Gedächtnisstütze zu haben:
+- warum bestimmte Entscheidungen getroffen wurden
+- wie das System grob gedacht ist
+- was auf dem Staging-Server bereits existiert
+- was bewusst **noch nicht** finalisiert wurde
+
+---
+
+# 1. Produktidee / Grundphilosophie
+
+## Ausgangslage
+
+Aktuell existieren beim Tennisverein mehrere voneinander getrennte Systeme:
+
+### NetXP Verein
+Wird derzeit für klassische Vereinsverwaltung genutzt:
+- Mitgliederdaten
+- Buchhaltung
+- Rechnungen
+- Lastschrift / Abbuchungen
+
+Mit NetXP besteht Unzufriedenheit. Ein späterer Austausch gegen ein besseres Tool ist denkbar.
+
+### eBuSy
+Wird für operative Buchungen genutzt:
+- Platzbuchungen
+- Hallenbuchungen
+- Gruppentrainings
+
+Positiv:
+- eBuSy ist funktional gut
+- eBuSy bietet eine gute API
+
+Negativ:
+- Frontend und Backend sind an manchen Stellen nicht informativ genug
+
+### Website
+- aktuelle Website: statische WordPress-Seite
+
+---
+
+## Zielbild
+
+Es soll eine eigene Anwendung entstehen, die Informationen aus mehreren Quellen bündelt und später möglicherweise Teilbereiche ganz selbst übernimmt.
+
+Kernidee:
+
+> Eine eigene Integrations-, Analyse- und Anwendungsschicht über NetXP (oder späterem Ersatz) und eBuSy.
+
+Diese eigene Anwendung soll:
+- Daten aus bestehenden Systemen zusammenführen
+- eigene zusätzliche Logik und Datenmodelle erlauben
+- bessere Admin-Oberflächen bereitstellen
+- bessere Informationen für Mitglieder liefern
+- Frontend-Endpunkte für Website oder App bereitstellen
+
+---
+
+## Wichtiger Architektur-Grundsatz
+
+**Nicht sofort NetXP und eBuSy komplett ersetzen.**
+
+Sondern zunächst:
+
+### Phase 1: Overlay / Integrationsschicht
+Das eigene System liegt „über“ den bestehenden Systemen.
+
+Es:
+- liest Daten ein
+- speichert ggf. eigene ergänzende Daten
+- stellt bessere Ansichten und Workflows bereit
+
+### Phase 2: Eigene Workflows
+Beispiele:
+- Arbeitsstunden digital erfassen
+- Freigabeprozesse für Admins
+- Traineransichten für Gruppenteilnehmer
+- Auswertungen und Reports
+- bessere Mitgliedersichten
+
+### Phase 3: Eigene Source of Truth für Teilbereiche
+Später können bestimmte Bereiche im eigenen System führend werden.
+
+Beispiele:
+- Arbeitsstunden
+- Mitgliedsanträge
+- interne Rollen / Status
+- Kurs- und Gruppentraining-Logik
+
+### Phase 4: Eventueller Teil- oder Vollersatz bestehender Tools
+Erst sehr viel später denkbar:
+- NetXP teilweise oder ganz ersetzen
+- eBuSy in bestimmten Teilbereichen ergänzen oder teilweise ablösen
+
+---
+
+## Was als erstes gute MVP-Bausteine sind
+
+Zwei frühe Use Cases wurden als besonders sinnvoll identifiziert:
+
+### 1. Arbeitsstunden-Modul
+Jedes Mitglied muss 5 Arbeitsstunden pro Jahr ableisten.
+
+Ziel:
+- Stunden digital erfassen
+- Mitglieder sehen ihren Stand online
+- Admins können Stunden freigeben / bestätigen
+
+Warum geeignet:
+- klarer Prozess
+- klarer Nutzen
+- wenig Risiko
+- guter erster Bereich für eigene Logik
+
+### 2. Traineransicht für Gruppentrainings
+Trainer sollen genau sehen können, wer welche Gruppentrainings bei eBuSy gebucht hat.
+
+Warum geeignet:
+- hoher operativer Nutzen
+- API-nah
+- klar begrenzter Scope
+- verbessert Arbeitsalltag sofort
+
+---
+
+# 2. Grundsätzliche Techstack-Entscheidung
+
+## Klare Empfehlung
+
+Die neue Anwendung soll **nicht** als WordPress-Kern gebaut werden.
+
+### WordPress bleibt:
+- öffentliche Website
+- Content-CMS
+- statische / redaktionelle Inhalte
+
+### Die neue App wird:
+- eigenständige Anwendung
+- auf Subdomain
+- mit eigener API
+- mit eigener Datenbank
+- mit eigenem Frontend
+
+---
+
+## Domain- / Subdomain-Idee
+
+Später angedacht:
+
+- `www.treptower-teufel.de` → öffentliche WordPress-Seite
+- `app.treptower-teufel.de` → Mitglieder- und Adminbereich
+- `api.treptower-teufel.de` → API für App, Frontend, ggf. WordPress-Widgets
+
+Für Staging später sinngemäß:
+- `staging-app...`
+- `staging-api...`
+
+---
+
+## Backend
+
+### Entscheidung
+**FastAPI**
+
+Warum:
+- gut für APIs
+- Python-basiert
+- saubere Datenmodelle
+- gut für Rollen, Rechte, Admin-Workflows
+- Integrationen in andere Systeme gut machbar
+- geeignet für wachsende Business-Logik
+
+---
+
+## Frontend
+
+Diskutiert wurden:
+- SvelteKit
+- Svelte + Vite („selbst basteln“)
+- WordPress-Plugins
+
+### Ergebnis
+**Nicht WordPress als App-Plattform.**
+
+### Kurzfazit
+- WordPress-Plugins: nur für kleine Widgets / Darstellungen okay
+- Für die eigentliche App ungeeignet als Kern
+- Svelte / SvelteKit grundsätzlich geeignet
+
+### Aktuelle Tendenz
+Für das eigentliche App-Frontend:
+- **Svelte oder SvelteKit**
+- Frontend getrennt vom Backend
+
+Es wurde später bewusst offen gelassen, ob für den ersten Schritt eher:
+- plain Svelte + Vite
+- oder SvelteKit
+
+gebaut wird.
+
+Da Staging erstmal schlicht gehalten werden soll, ist beides noch offen.
+
+---
+
+## Datenbank
+
+### Entscheidung
+**PostgreSQL**
+
+Warum:
+Die Vereinsdaten sind stark relational:
+- Mitglieder
+- Status
+- Gruppen
+- Buchungen
+- Trainer
+- Arbeitsstunden
+- Freigaben
+- Rollen
+- Rechnungs-/Verwaltungsbezüge
+
+Daher wurde klar festgehalten:
+- **SQL ja**
+- **PostgreSQL ja**
+- **kein NoSQL als Primärdatenbank**
+
+---
+
+## Docker
+
+Es bestehen schlechte Erfahrungen mit Docker.
+
+### Einschätzung
+Docker ist **nicht zwingend nötig**.
+
+### Beschluss / Empfehlung
+Für dieses Projekt ist ein Start **ohne Docker** völlig legitim.
+
+Stattdessen:
+- Ubuntu
+- systemd
+- FastAPI
+- PostgreSQL
+- Node
+- Reverse Proxy
+- Deploy-Skripte
+
+Docker kann später immer noch dazukommen, ist aber kein Muss.
+
+---
+
+# 3. Hosting-Philosophie
+
+## Europa / deutsche Hand als wichtiges Kriterium
+
+Es wurde ausdrücklich als wichtig festgehalten:
+> Das Vereinsprojekt soll möglichst vollständig in europäischer / deutscher Hand liegen.
+
+Darum wurde Hetzner als sehr passend angesehen.
+
+---
+
+## AWS vs. Hetzner
+
+Beruflich existiert bereits ein AWS-basierter Stack:
+- EC2
+- FastAPI
+- Svelte/Vite
+- DynamoDB
+- SSM für Secrets
+
+### Übertragbarkeit auf Hetzner
+Ja, strukturell ist das gut übertragbar, aber **nicht 1:1 als Managed Services**.
+
+### Typische Zuordnung
+- EC2 → Hetzner Cloud Server
+- DynamoDB → im Vereinsprojekt eher **PostgreSQL**
+- SSM → eigene Secrets-/Env-Verwaltung
+- S3-artige Assets → optional Hetzner Object Storage
+
+### Wichtige Erkenntnis
+Für den Verein ist der Hetzner-Ansatz eher:
+- schlicht
+- kontrollierbar
+- günstig
+- gut selbst betreibbar
+
+Nicht:
+- AWS-Managed-Services möglichst exakt nachspielen
+
+---
+
+# 4. Staging-vor-Prod-Ansatz
+
+Es wurde bewusst entschieden:
+
+> Nicht sofort Produktion aufbauen, sondern zunächst Staging sauber aufsetzen.
+
+Das ist sinnvoll, um:
+- die Hosting- und Deploy-Logik zu üben
+- Backend- und Frontend-Struktur zu testen
+- später lokal → staging → prod sauber denken zu können
+
+---
+
+# 5. Hetzner-Projekt
+
+## Projektname
+**Treptower Teufel**
+
+## Hetzner Console / Projekt
+Projekt wurde angelegt.
+
+Bekannte Projekt-ID aus dem Chat:
+- `13723822`
+
+Interner Verweis aus dem Chat:
+- `https://console.hetzner.com/projects/13723822/dashboard`
+
+---
+
+# 6. Staging-Server: aktueller Stand
+
+## Serverdaten
+
+### Servername
+`tttc-staging-01`
+
+### Server-ID
+`#123092392`
+
+### Servertyp
+`CPX22`
+
+Hinweis:
+Ursprünglich wurde über `CPX21` gesprochen, tatsächlich war aber `CPX22` die kleinste verfügbare Option.
+
+### Standort
+Es wurde zwischen Falkenstein und Nürnberg abgewogen.
+Entscheidung:
+- **Nürnberg** bzw. deutsche Region als sinnvolle Standardwahl
+
+### Image
+**Ubuntu 24.04 LTS**
+
+### Öffentliche IPv4
+`46.225.208.231`
+
+### IPv6-Netz
+`2a01:4f8:1c19:3876::/64`
+
+---
+
+## Hetzner-Optionen beim Server-Setup: getroffene Entscheidungen
+
+### Private Network
+**Für diesen einzelnen Staging-Server zunächst nein.**
+
+Begründung:
+- nur ein Server
+- noch kein separater DB-Server
+- noch keine interne Multi-Server-Kommunikation nötig
+
+### Volumes
+**Nein**
+
+Begründung:
+- für Staging nicht nötig
+- zusätzlicher komplexer Speicherbedarf aktuell nicht vorhanden
+- einfacher Start bevorzugt
+
+### Placement Groups
+**Nein**
+
+Begründung:
+- nur relevant für mehrere redundante Server
+- für einen einzelnen Staging-Server ohne Nutzen
+
+### Labels
+**Nein**
+
+Begründung:
+- aktuell unnötig
+- könnte später optional ergänzt werden
+
+### Cloud Config / User Data
+**Nein**
+
+Begründung:
+- initial lieber schlicht
+- Server erst einmal manuell nachvollziehbar einrichten
+
+### SSH Key
+**Ja**
+Es wurde direkt ein SSH-Key angelegt und genutzt.
+
+---
+
+# 7. SSH / Zugriff
+
+## Lokaler SSH-Key
+
+Auf dem Windows-Rechner wurde erzeugt:
+
+- privater Key:
+  `C:\Users\arved\.ssh\teufel_ed25519`
+- öffentlicher Key:
+  `C:\Users\arved\.ssh\teufel_ed25519.pub`
+
+Erzeugung per:
+
+```powershell
+ssh-keygen -t ed25519 -C "arved@treptower-teufel"
+````
+
+Speicherort wurde dabei explizit gesetzt auf:
+`C:\Users\arved\.ssh\teufel_ed25519`
+
+---
+
+## SSH-Verbindung
+
+Login-Beispiel:
+
+```powershell
+ssh -i C:\Users\arved\.ssh\teufel_ed25519 root@46.225.208.231
+```
+
+Später wurde zusätzlich ein normaler User angelegt.
+
+---
+
+## Angelegter normaler Benutzer
+
+`arved`
+
+Dieser wurde:
+
+* angelegt
+* der `sudo`-Gruppe hinzugefügt
+* mit dem SSH-Key ausgestattet
+
+---
+
+## Wichtige Erkenntnis
+
+Administrative Dinge wie:
+
+* `apt install`
+* `ufw`
+* Userverwaltung
+* Hostname
+  usw. gehen nur mit Root-Rechten bzw. mit `sudo`.
+
+Das ist normal.
+
+---
+
+# 8. Basis-Servereinrichtung
+
+Die folgenden Schritte wurden auf dem Server ausgeführt bzw. sinngemäß durchgezogen:
+
+## System aktualisieren
+
+```bash
+apt update && apt upgrade -y
+```
+
+## Zeitzone setzen
+
+```bash
+timedatectl set-timezone Europe/Berlin
+```
+
+## Hostname
+
+```bash
+hostnamectl set-hostname tttc-staging-01
+```
+
+## Normalen User anlegen
+
+```bash
+adduser arved
+usermod -aG sudo arved
+mkdir -p /home/arved/.ssh
+cp /root/.ssh/authorized_keys /home/arved/.ssh/
+chown -R arved:arved /home/arved/.ssh
+chmod 700 /home/arved/.ssh
+chmod 600 /home/arved/.ssh/authorized_keys
+```
+
+---
+
+# 9. Firewall
+
+Es wurde zusätzlich serverseitig `ufw` eingerichtet.
+
+## Freigeschaltet:
+
+* OpenSSH
+* HTTP (80)
+* HTTPS (443)
+
+Beispiel-Kommandos:
+
+```bash
+sudo apt install -y ufw
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+sudo ufw status
+```
+
+---
+
+# 10. Installierte Laufzeitumgebung
+
+## Python
+
+Installiert:
+
+* Python 3.12.3
+
+Geprüft mit:
+
+```bash
+python3 --version
+```
+
+Ergebnis:
+`Python 3.12.3`
+
+### Entscheidung zu Python 3.13
+
+Es wurde ausdrücklich gefragt, ob auf Python 3.13 gegangen werden soll.
+
+Entscheidung:
+
+* **Nein, vorerst bei Python 3.12 bleiben**
+
+Begründung:
+
+* Ubuntu 24.04 Standard
+* stabil
+* für FastAPI völlig ausreichend
+* weniger Zusatzkomplexität
+
+---
+
+## PostgreSQL
+
+Installiert:
+
+* PostgreSQL
+* PostgreSQL Contrib
+
+Beispiel:
+
+```bash
+sudo apt install -y postgresql postgresql-contrib
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+```
+
+### DB-Zugang
+
+Es wurde eine Datenbank und ein dedizierter Benutzer angelegt.
+
+Im Chat wurden die konkreten **Namen** genannt:
+
+* Datenbank: `tttc_staging`
+* User: `tttc_staging_user`
+
+Das Passwort wurde im Chat **nicht dokumentiert** und gehört daher hier nur als Platzhalter hinein.
+
+Beispiel-Grundmuster:
+
+```sql
+CREATE USER tttc_staging_user WITH ENCRYPTED PASSWORD '<PASSWORT>';
+CREATE DATABASE tttc_staging OWNER tttc_staging_user;
+```
+
+### Test
+
+Es wurde erfolgreich getestet, dass die DB läuft.
+
+---
+
+## Python-venv
+
+Es wurde erfolgreich eine Python-Virtual-Environment angelegt.
+
+Aktueller Pfad:
+`/srv/tttc/app/api/.venv`
+
+---
+
+## FastAPI-Test
+
+Es wurde testweise eine minimale FastAPI-App angelegt und erfolgreich gestartet.
+
+Beispielinhalt:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+### Test
+
+Der `/health`-Endpoint lief erfolgreich.
+
+Das war bewusst nur ein Proof of Concept, nicht das finale Projekt-Setup.
+
+---
+
+## Node.js
+
+Node.js wurde auf dem Server installiert.
+
+Wichtig:
+
+* dient für Frontend / Build-Tooling
+* nicht als Backend-Ersatz
+
+Konkrete Version wurde im Chat nicht festgehalten.
+
+---
+
+## Caddy
+
+Zum Zeitpunkt dieses Dokuments:
+
+* **noch nicht final weiterverfolgt**
+* Installation war als nächster Schritt angedacht, wurde aber nicht abgeschlossen / nicht weiter vertieft
+
+---
+
+# 11. Verzeichnisstruktur: aktuelle bewusste Entscheidung
+
+Ursprünglich wurden mehrere konkurrierende Strukturen diskutiert:
+
+* Releases
+* Shared
+* Apps
+* Logs
+* komplexere Release-Layouts
+
+Dann wurde bewusst vereinfacht.
+
+## Beschluss für Staging
+
+Für **Staging** wird **kein aufwendiges Release-Modell** verwendet.
+
+Begründung:
+
+* Staging soll erstmal einfach sein
+* noch kein echtes Rollback-System nötig
+* keine unnötige Komplexität
+* Produktivmodell kann später sauberer sein
+
+## Aktuelle Zielstruktur
+
+```text
+/srv/tttc
+└── app
+    ├── api
+    │   └── .venv
+    ├── env
+    ├── logs
+    └── web
+```
+
+Diese Struktur wurde final für Staging als sinnvoll akzeptiert.
+
+### Bedeutung
+
+* `api` → Backend-Code + Python-venv
+* `web` → Frontend-Code
+* `env` → serverseitige `.env`-Dateien
+* `logs` → Log-Dateien, sofern benötigt
+
+---
+
+# 12. Deploy-Philosophie
+
+Ein sehr wichtiger Punkt der bisherigen Diskussion:
+
+> App-Code und Projektstruktur sollen später **lokal sauber gebaut** und **per Deploy** auf den Server gebracht werden.
+
+## Konsequenz
+
+Der aktuell auf dem Server liegende Testcode ist **nicht** als finales Projekt-Layout zu verstehen.
+
+### Auf dem Server manuell okay:
+
+* OS
+* Pakete
+* PostgreSQL
+* Python
+* Node
+* Firewall
+* User
+* Grundordner
+
+### Im lokalen Git-Repo entstehen später:
+
+* eigentliche Backend-Struktur
+* eigentliche Frontend-Struktur
+* `pyproject.toml`
+* ggf. Lockfiles
+* Alembic
+* Deploy-Skripte
+* systemd-Templates
+* Reverse-Proxy-Konfigurationen
+* Build- und Startlogik
+
+## Wichtiger Grundsatz
+
+**Server manuell für Infrastruktur.**
+**App per Git / Deploy.**
+
+---
+
+# 13. Warum für Staging kein Releases-Modell
+
+Es wurde explizit gefragt, ob man auf Staging überhaupt „lauter releases“ braucht.
+
+## Ergebnis
+
+**Nein.**
+
+### Für Staging reicht:
+
+* ein fester Pfad
+* klares Zielverzeichnis
+* einfacher Deploy dorthin
+
+### Ein Releases-/Current-/Shared-Modell ist eher sinnvoll für:
+
+* Produktion
+* Rollbacks
+* mehrere Deploy-Generationen
+* stärkere Betriebsähnlichkeit zu Prod
+
+### Daher für Staging bewusst einfach:
+
+```text
+/srv/tttc/app/api
+/srv/tttc/app/web
+/srv/tttc/app/env
+/srv/tttc/app/logs
+```
+
+---
+
+# 14. Offene Architekturentscheidungen / bewusst noch nicht final
+
+## Frontend
+
+Noch offen:
+
+* plain Svelte + Vite
+* oder SvelteKit
+
+Beides wurde als möglich angesehen.
+Wichtig war nur:
+
+* nicht WordPress als eigentliche App-Plattform
+
+---
+
+## Caddy / Reverse Proxy
+
+Noch nicht final eingerichtet.
+
+Später notwendig für:
+
+* Reverse Proxy
+* HTTPS
+* Routing von Domain zu Backend / Frontend
+
+---
+
+## systemd-Services
+
+Noch nicht final angelegt.
+
+Später notwendig für:
+
+* automatischen Start des FastAPI-Backends
+* evtl. Frontend-Serving
+* geordneten Betrieb nach Reboot
+
+---
+
+## Deploy-Skripte
+
+Noch nicht gebaut.
+
+Aber klarer Wunsch:
+
+* lokales Repo
+* definierte Deploy-Ziele
+* möglichst einfache Skripte
+* kein wildes manuelles Kopieren
+
+---
+
+## Secrets / Env-Dateien
+
+Bewusst noch nicht ins finale Format gegossen.
+
+Geplante Richtung:
+
+* serverseitige Env-Dateien unter z. B.:
+
+  * `/srv/tttc/app/env/api.env`
+  * `/srv/tttc/app/env/web.env`
+
+Nicht im Git.
+
+---
+
+# 15. Grobe empfohlene weitere Schritte
+
+## Kurzfristig
+
+1. Lokal Projektstruktur sauber aufsetzen
+2. Backend lokal als echtes Projekt anlegen
+3. Frontend lokal anlegen
+4. Git-Repo definieren
+5. Deploy-Ziel für Staging festlegen
+6. Erstes echtes Deploy nach:
+
+   * `/srv/tttc/app/api`
+   * `/srv/tttc/app/web`
+
+## Danach
+
+7. systemd-Service für FastAPI
+8. Caddy als Reverse Proxy
+9. Staging-Domain / Subdomain
+10. erste echte Datenmodelle und Migrationslogik
+
+## Erst später
+
+11. Produktionsarchitektur
+12. Trennung app/db für Prod
+13. private Netzwerke in Prod
+14. sauberere Rollback-/Release-Strategie
+
+---
+
+# 16. Spätere Produktiv-Philosophie (noch nicht umgesetzt)
+
+Für Produktion wurde als „sauberere“ Zukunftsrichtung diskutiert:
+
+* eigener Prod-App-Server
+* eigener Prod-DB-Server
+* private Kommunikation
+* stärkeres Release-Modell
+
+Wichtig:
+Das wurde **nicht** für Staging übernommen.
+
+Staging bleibt bewusst einfach.
+
+---
+
+# 17. Wichtige Merksätze aus der bisherigen Diskussion
+
+## Architektur
+
+* Nicht sofort NetXP und eBuSy ersetzen
+* Erst Overlay- und Integrationsschicht bauen
+* Eigene Workflows zuerst in kleinen, dankbaren Bereichen
+
+## Produkt
+
+* Arbeitsstunden-Modul ist ein sehr guter MVP-Baustein
+* Traineransicht für Gruppentrainings ebenfalls
+
+## Tech
+
+* FastAPI ja
+* PostgreSQL ja
+* WordPress nicht als App-Kern
+* Docker nicht zwingend
+
+## Hosting
+
+* Hetzner passt gut
+* europäische / deutsche Infrastruktur wichtig
+* Staging bewusst einfach
+
+## Serverbetrieb
+
+* Infrastruktur manuell auf dem Server
+* Anwendung später lokal entwickeln und deployen
+
+---
+
+# 18. Aktueller faktischer Stand in Kurzform
+
+## Besteht bereits
+
+* Hetzner-Projekt „Treptower Teufel“
+* Staging-Server `tttc-staging-01`
+* Ubuntu 24.04 LTS
+* öffentlicher Zugriff via IPv4
+* SSH-Key eingerichtet
+* User `arved`
+* `sudo`
+* UFW aktiv
+* PostgreSQL installiert
+* Staging-DB + DB-User angelegt
+* Python 3.12.3
+* `.venv`
+* FastAPI-Minimaltest erfolgreich
+* Node.js installiert
+* Staging-Verzeichnisstruktur festgelegt
+
+## Noch nicht final
+
+* echtes lokales Projekt
+* echtes Deploy
+* Caddy
+* systemd für App
+* Frontend-Projekt
+* Domain-Routing
+* Secrets-/Env-Konzept finalisiert
+* Produktivumgebung
+
+---
+
+# 19. Bekannte konkrete Zugangsdaten / Infrastrukturangaben
+
+## Hetzner
+
+* Projektname: `Treptower Teufel`
+* Projekt-ID: `13723822`
+
+## Staging-Server
+
+* Name: `tttc-staging-01`
+* ID: `123092392`
+* Typ: `CPX22`
+* IPv4: `46.225.208.231`
+* IPv6-Netz: `2a01:4f8:1c19:3876::/64`
+
+## SSH
+
+* Benutzer: `root`
+* Benutzer: `arved`
+* privater Key lokal:
+  `C:\Users\arved\.ssh\teufel_ed25519`
+* öffentlicher Key lokal:
+  `C:\Users\arved\.ssh\teufel_ed25519.pub`
+
+## Serverstruktur
+
+```text
+/srv/tttc/app/api
+/srv/tttc/app/web
+/srv/tttc/app/env
+/srv/tttc/app/logs
+```
+
+## Python
+
+* Version: `3.12.3`
+
+## PostgreSQL
+
+* DB-Name: `tttc_staging`
+* DB-User: `tttc_staging_user`
+* DB-Passwort: **nicht in diesem Dokument enthalten**
+
+---
+
+# 20. Dinge, die bewusst nicht in diesem Dokument stehen
+
+Folgendes wurde **nicht** dokumentiert, weil es entweder nicht im Chat stand oder nicht in Klartext hier hineingehört:
+
+* PostgreSQL-Passwort
+* künftige API-Secrets
+* spätere `.env`-Werte
+* Domain-Provider-Zugang
+* Hetzner-Login-Daten
+* echte Deploy-Keys außerhalb des genannten SSH-Dateipfads
+
+---
+
+# 21. Möglicher nächster lokaler Repo-Ansatz (nur als grobe Voridee)
+
+Noch nicht final beschlossen, aber als mögliche spätere lokale Struktur sinnvoll:
+
+```text
+clubapp/
+  backend/
+  frontend/
+  ops/
+    deploy/
+    systemd/
+    caddy/
+  docs/
+```
+
+Oder ähnlich.
+
+Wichtig ist nur:
+
+* lokal sauber
+* deploybar
+* serverunabhängige Anwendungsstruktur
+* serverseitige Infrastruktur davon getrennt
+
+---
+
+# 22. Abschließende Quintessenz
+
+Die bisherige Reise war bewusst:
+
+* klein anfangen
+* sauber denken
+* keine unnötige Komplexität
+* Staging zuerst
+* Infrastruktur von Anwendungslogik trennen
+* bestehende Vereinstools erstmal ergänzen statt sofort ersetzen
+
+Das aktuelle Ergebnis ist ein guter, pragmatischer Ausgangspunkt:
+
+* Server steht
+* Laufzeitumgebung steht
+* Staging ist vorbereitet
+* weitere Projektstruktur soll nun lokal sauber entstehen
+
