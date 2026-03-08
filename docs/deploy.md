@@ -116,6 +116,8 @@ Use this checklist once to get the API and frontend running on staging. **Prereq
 
 To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (or find PIDs with `ps aux | grep uvicorn` / `ps aux | grep vite`).
 
+**After first-time setup:** Use the script to deploy updates from your machine: run **`.\scripts\deploy-staging.ps1`** (or `./scripts/deploy-staging.sh`). It pushes `main`, then SSHs to the server and runs pull + API update + web build + restart of both. See [scripts/README.md](../scripts/README.md).
+
 ---
 
 ## 6. Staging deploy — manual steps (reference)
