@@ -14,4 +14,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 5173,
+    host: '0.0.0.0',
+    allowedHosts: ['staging-app.treptower-teufel.de', 'localhost', '127.0.0.1'],
+  },
 })

@@ -199,7 +199,11 @@ To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (
 
 ---
 
-## 9. Quick reference
+## 9. Caddy (HTTPS on staging)
+
+Once DNS for `staging-app` and `staging-api` points to the server, use Caddy for HTTPS. Step-by-step: **[docs/caddy-staging.md](./caddy-staging.md)**.
+
+## 10. Quick reference
 
 | Action | Where to look |
 |--------|----------------|
@@ -208,6 +212,7 @@ To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (
 | Repo URL, branch | This doc §2 |
 | Deploy target paths | This doc §3 |
 | Manual deploy steps | This doc §5 |
+| Caddy / HTTPS staging | [caddy-staging.md](./caddy-staging.md) |
 
 ---
 
