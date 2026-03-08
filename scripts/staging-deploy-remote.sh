@@ -24,6 +24,7 @@ mkdir -p "$APP_ROOT/logs"
 nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/logs/api.log" 2>&1 &
 echo "API started (port 8000)."
 
+cd "$APP_ROOT"
 echo "=== Updating web ==="
 if [ ! -d "$APP_ROOT/repo/web" ]; then
   echo "repo/web not found. Ensure web/ is committed and pushed, then on server: cd /srv/tttc/app/repo && git pull origin main"
