@@ -115,7 +115,8 @@ Server:
 - [ ] **`env-and-secrets.md`** — prod env path `/srv/tttc/prod/env/`.
 - [ ] **`systemd-staging.md`** — rename or split into staging + prod unit install.
 - [ ] **`caddy-staging.md`** — add prod blocks or link to “full Caddyfile” snippet in server-layout or new doc.
-- [ ] **Prod backups:** e.g. daily `pg_dump` of `tttc_prod` (cron + off-server copy).
+- [ ] **Prod backups:** e.g. daily `pg_dump` of `tttc_prod` (cron + off-server copy) — see [deploy.md](./deploy.md) §12.
+- [ ] **Migrations plan:** decide when we introduce Alembic (or similar) and how it runs in deploy — see [deploy.md](./deploy.md) §12.
 
 ---
 

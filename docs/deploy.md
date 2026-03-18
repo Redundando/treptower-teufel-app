@@ -228,4 +228,38 @@ Once DNS for `staging-app` and `staging-api` points to the server, use Caddy for
 
 ---
 
+## 12. Missing (next hardening steps)
+
+These items are **not required** for the first hello-world deployment, but they are the usual next steps before real users and real data.
+
+### 12.1 Production backups (strongly recommended)
+
+- **Goal**: if something goes wrong (bug, migration, operator error), you can restore `tttc_prod`.
+- **Minimum**:
+  - daily `pg_dump` of `tttc_prod`
+  - keep multiple days (e.g. 7–30)
+  - copy off the server (S3/Backblaze/another host), otherwise “server dies” = “backup dies”
+  - do at least one restore test
+
+### 12.2 Database migrations / schema changes (future)
+
+Right now we don’t use a migration tool. When we start changing the DB schema (tables/columns/indexes), we should add a repeatable mechanism (committed to Git) such as Alembic.
+
+- **Rule of thumb**:
+  - run migrations on **staging** first (`tttc_staging`)
+  - promote the same commit/tag to prod
+  - run migrations on **prod** (`tttc_prod`) as part of prod deploy (before restarting API)
+
+### 12.3 Monitoring / alerts (future)
+
+- disk space alerts (Postgres + logs)
+- service health: `tttc-api-*`, `tttc-web-*`, `postgresql`, `caddy`
+- basic uptime check against `/health`
+
+### 12.4 Security / access hygiene (future)
+
+- use a **dedicated deploy SSH key** for GitHub Actions (not a personal laptop key)
+- keep sudoers minimal: allow only the exact `systemctl restart ...` commands needed for deploy
+- when contributors join: protect `main` and restrict who can push tags that trigger prod deploy
+
 *Update this doc whenever we add deploy scripts, change paths, or introduce production.*
