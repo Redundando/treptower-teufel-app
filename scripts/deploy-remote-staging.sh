@@ -27,7 +27,11 @@ fi
 echo "=== Updating API (preserve .venv) ==="
 (cd "$REPO_ROOT/api" && tar cf - .) | (cd "$APP_ROOT/api" && tar xf -)
 cd "$APP_ROOT/api"
-.venv/bin/pip install -e . -q
+if [ ! -x .venv/bin/python ]; then
+  echo "Missing venv python at $APP_ROOT/api/.venv/bin/python (did the venv get created/moved correctly?)"
+  exit 1
+fi
+.venv/bin/python -m pip install -e . -q
 
 restart_api_only() {
   if [ -f /etc/systemd/system/tttc-api-staging.service ]; then
