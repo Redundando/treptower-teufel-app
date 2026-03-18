@@ -39,7 +39,12 @@ if [ ! -f /etc/systemd/system/tttc-api-prod.service ]; then
   exit 1
 fi
 echo "Restarting prod API..."
-sudo systemctl restart tttc-api-prod
+if sudo -n true 2>/dev/null; then
+  sudo -n systemctl restart tttc-api-prod
+else
+  echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."
+  exit 1
+fi
 
 echo "=== Updating web ==="
 if [ ! -d "$REPO_ROOT/web" ]; then
@@ -56,7 +61,12 @@ if [ ! -f /etc/systemd/system/tttc-web-prod.service ]; then
   echo "Install tttc-web-prod.service first."
   exit 1
 fi
-sudo systemctl restart tttc-web-prod
+if sudo -n true 2>/dev/null; then
+  sudo -n systemctl restart tttc-web-prod
+else
+  echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."
+  exit 1
+fi
 
 echo ""
 echo "Done (prod @ $GIT_REF)."

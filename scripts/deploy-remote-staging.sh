@@ -32,10 +32,26 @@ cd "$APP_ROOT/api"
 restart_api_only() {
   if [ -f /etc/systemd/system/tttc-api-staging.service ]; then
     echo "Restarting staging API (systemd)..."
-    sudo systemctl restart tttc-api-staging
+    if sudo -n true 2>/dev/null; then
+      sudo -n systemctl restart tttc-api-staging
+    else
+      echo "No passwordless sudo; falling back to nohup restart."
+      pkill -f "uvicorn app.main:app" 2>/dev/null || true
+      sleep 1
+      mkdir -p "$APP_ROOT/logs"
+      nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/logs/api.log" 2>&1 &
+    fi
   elif [ -f /etc/systemd/system/tttc-api.service ]; then
     echo "Restarting API (legacy systemd)..."
-    sudo systemctl restart tttc-api
+    if sudo -n true 2>/dev/null; then
+      sudo -n systemctl restart tttc-api
+    else
+      echo "No passwordless sudo; falling back to nohup restart."
+      pkill -f "uvicorn app.main:app" 2>/dev/null || true
+      sleep 1
+      mkdir -p "$APP_ROOT/logs"
+      nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 >> "$APP_ROOT/logs/api.log" 2>&1 &
+    fi
   else
     echo "Stopping old API (if any)..."
     pkill -f "uvicorn app.main:app" 2>/dev/null || true
@@ -62,9 +78,25 @@ npm run build
 
 if [ -f /etc/systemd/system/tttc-web-staging.service ]; then
   echo "Restarting staging web (systemd)..."
-  sudo systemctl restart tttc-web-staging
+  if sudo -n true 2>/dev/null; then
+    sudo -n systemctl restart tttc-web-staging
+  else
+    echo "No passwordless sudo; falling back to nohup restart."
+    pkill -f "vite preview" 2>/dev/null || true
+    sleep 1
+    mkdir -p "$APP_ROOT/logs"
+    nohup npm run preview:staging >> "$APP_ROOT/logs/web.log" 2>&1 &
+  fi
 elif [ -f /etc/systemd/system/tttc-web.service ]; then
-  sudo systemctl restart tttc-web
+  if sudo -n true 2>/dev/null; then
+    sudo -n systemctl restart tttc-web
+  else
+    echo "No passwordless sudo; falling back to nohup restart."
+    pkill -f "vite preview" 2>/dev/null || true
+    sleep 1
+    mkdir -p "$APP_ROOT/logs"
+    nohup npm run preview:staging >> "$APP_ROOT/logs/web.log" 2>&1 &
+  fi
 else
   echo "Stopping old frontend (if any)..."
   pkill -f "vite preview" 2>/dev/null || true
