@@ -23,8 +23,8 @@ jobs:
             echo "=== Remote identity ==="
             whoami
             id
-            echo "sudo -n true exit code:"
-            sudo -n true && echo "OK (passwordless sudo works)" || echo "FAIL (no passwordless sudo)"
+            echo "sudo -n systemctl restart tttc-api-prod exit code:"
+            sudo -n systemctl restart tttc-api-prod && echo "OK (restart allowed)" || echo "FAIL (restart not allowed without password)"
 
             export GIT_REF="${{ github.ref_name }}"
             cd /srv/tttc/prod/repo

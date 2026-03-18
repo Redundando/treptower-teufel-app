@@ -36,8 +36,10 @@ fi
 restart_api_only() {
   if [ -f /etc/systemd/system/tttc-api-staging.service ]; then
     echo "Restarting staging API (systemd)..."
-    if sudo -n true 2>/dev/null; then
-      sudo -n systemctl restart tttc-api-staging
+    if [ "$(id -u)" -eq 0 ]; then
+      systemctl restart tttc-api-staging
+    elif sudo -n systemctl restart tttc-api-staging 2>/dev/null; then
+      true
     else
       echo "No passwordless sudo; falling back to nohup restart."
       pkill -f "uvicorn app.main:app" 2>/dev/null || true
@@ -47,8 +49,10 @@ restart_api_only() {
     fi
   elif [ -f /etc/systemd/system/tttc-api.service ]; then
     echo "Restarting API (legacy systemd)..."
-    if sudo -n true 2>/dev/null; then
-      sudo -n systemctl restart tttc-api
+    if [ "$(id -u)" -eq 0 ]; then
+      systemctl restart tttc-api
+    elif sudo -n systemctl restart tttc-api 2>/dev/null; then
+      true
     else
       echo "No passwordless sudo; falling back to nohup restart."
       pkill -f "uvicorn app.main:app" 2>/dev/null || true
@@ -82,8 +86,10 @@ npm run build
 
 if [ -f /etc/systemd/system/tttc-web-staging.service ]; then
   echo "Restarting staging web (systemd)..."
-  if sudo -n true 2>/dev/null; then
-    sudo -n systemctl restart tttc-web-staging
+  if [ "$(id -u)" -eq 0 ]; then
+    systemctl restart tttc-web-staging
+  elif sudo -n systemctl restart tttc-web-staging 2>/dev/null; then
+    true
   else
     echo "No passwordless sudo; falling back to nohup restart."
     pkill -f "vite preview" 2>/dev/null || true
@@ -92,8 +98,10 @@ if [ -f /etc/systemd/system/tttc-web-staging.service ]; then
     nohup npm run preview:staging >> "$APP_ROOT/logs/web.log" 2>&1 &
   fi
 elif [ -f /etc/systemd/system/tttc-web.service ]; then
-  if sudo -n true 2>/dev/null; then
-    sudo -n systemctl restart tttc-web
+  if [ "$(id -u)" -eq 0 ]; then
+    systemctl restart tttc-web
+  elif sudo -n systemctl restart tttc-web 2>/dev/null; then
+    true
   else
     echo "No passwordless sudo; falling back to nohup restart."
     pkill -f "vite preview" 2>/dev/null || true
