@@ -45,8 +45,8 @@ fi
 echo "Restarting prod API..."
 if [ "$(id -u)" -eq 0 ]; then
   systemctl restart tttc-api-prod
-elif sudo -n true 2>/dev/null; then
-  sudo -n systemctl restart tttc-api-prod
+elif sudo -n systemctl restart tttc-api-prod 2>/dev/null; then
+  true
 else
   echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."
   exit 1
@@ -69,8 +69,8 @@ if [ ! -f /etc/systemd/system/tttc-web-prod.service ]; then
 fi
 if [ "$(id -u)" -eq 0 ]; then
   systemctl restart tttc-web-prod
-elif sudo -n true 2>/dev/null; then
-  sudo -n systemctl restart tttc-web-prod
+elif sudo -n systemctl restart tttc-web-prod 2>/dev/null; then
+  true
 else
   echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."
   exit 1
