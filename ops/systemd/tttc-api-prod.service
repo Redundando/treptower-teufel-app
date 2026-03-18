@@ -1,0 +1,16 @@
+[Unit]
+Description=TTTC API production (FastAPI)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=arved
+Group=arved
+WorkingDirectory=/srv/tttc/prod/api
+EnvironmentFile=/srv/tttc/prod/env/api.env
+ExecStart=/srv/tttc/prod/api/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

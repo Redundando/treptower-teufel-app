@@ -26,7 +26,13 @@ Ensure the root `.env` contains `DATABASE_URL=postgresql://tttc_dev_user:YOUR_PA
 
 ## Run (local dev)
 
-From **project root** (so `.env` is found):
+From **project root**:
+
+```powershell
+.\scripts\run-api.ps1
+```
+
+Or manually (so `.env` is found):
 
 ```powershell
 cd "c:\dev\treptower teufel app api"
@@ -45,5 +51,5 @@ uvicorn app.main:app --reload
 - **DB check:** http://127.0.0.1:8000/db  
 - **Docs:** http://127.0.0.1:8000/docs  
 
-If you get `WinError 10013` (port in use or blocked), run on another port:  
-`api\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --app-dir api --port 8001`  
+If you get `WinError 10013` (port in use or blocked):  
+`.\scripts\run-api.ps1 --port 8001`  

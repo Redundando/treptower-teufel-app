@@ -13,12 +13,16 @@
 
 ## 1. Unit files (in the repo)
 
-The repo has two unit files under **`ops/systemd/`**:
+**Legacy (single tree `/srv/tttc/app`):**
 
-- **`tttc-api.service`** — runs the FastAPI app (uvicorn).
-- **`tttc-web.service`** — runs the frontend (Vite preview).
+- **`tttc-api.service`**, **`tttc-web.service`**
 
-They assume paths and user from [staging-setup.md](./staging-setup.md): app under `/srv/tttc/app`, user `arved`.
+**Target layout (`/srv/tttc/staging` + `/srv/tttc/prod`):**
+
+- **`tttc-api-staging.service`**, **`tttc-web-staging.service`** — ports 8000 / 5173
+- **`tttc-api-prod.service`**, **`tttc-web-prod.service`** — ports 8001 / 5174
+
+All under **`ops/systemd/`**. User `arved`; paths in [server-layout.md](./server-layout.md).
 
 ---
 

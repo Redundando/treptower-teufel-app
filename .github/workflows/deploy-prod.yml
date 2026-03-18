@@ -1,0 +1,25 @@
+# Push semver tag v*.*.* → deploy prod (same commit as tag)
+# Requires: prod tree at /srv/tttc/prod, systemd tttc-*-prod, secrets SSH_*
+name: Deploy production
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH — checkout tag and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            export GIT_REF="${{ github.ref_name }}"
+            cd /srv/tttc/prod/repo
+            bash scripts/deploy-remote-prod.sh

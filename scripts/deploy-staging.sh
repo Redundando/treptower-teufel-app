@@ -20,4 +20,4 @@ KEY="${TTTC_SSH_KEY:-$HOME/.ssh/teufel_ed25519}"
 HOST="46.225.208.231"
 USER="arved"
 
-ssh -i "$KEY" "${USER}@${HOST}" "cd /srv/tttc/app/repo && git pull origin main && bash scripts/staging-deploy-remote.sh"
+ssh -i "$KEY" "${USER}@${HOST}" 'set -e; if [ -d /srv/tttc/staging/repo ]; then cd /srv/tttc/staging/repo; elif [ -d /srv/tttc/app/repo ]; then cd /srv/tttc/app/repo; else echo "No staging repo"; exit 1; fi; bash scripts/deploy-remote-staging.sh'

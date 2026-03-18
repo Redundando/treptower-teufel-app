@@ -1,0 +1,17 @@
+[Unit]
+Description=TTTC Web staging (Vite preview)
+After=network.target tttc-api-staging.service
+
+[Service]
+Type=simple
+User=arved
+Group=arved
+WorkingDirectory=/srv/tttc/staging/web
+ExecStart=/usr/bin/npm run preview:staging
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PATH=/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target

@@ -2,6 +2,24 @@
 
 Helper scripts for the repo. Run from the **project root** (or the script will change to it).
 
+## run-api
+
+Start the API locally with **reload** and the root **`.env`** (via `--app-dir api`). Requires **`api/.venv`** and `pip install -e .` inside `api/` once.
+
+**PowerShell (Windows):**
+```powershell
+.\scripts\run-api.ps1
+```
+Another port: `.\scripts\run-api.ps1 --port 8001`
+
+**Bash (WSL / Linux / Mac):**
+```bash
+chmod +x scripts/run-api.sh   # once
+./scripts/run-api.sh
+```
+
+---
+
 ## ssh-staging
 
 SSH into the staging server (`arved@46.225.208.231`). Uses the key `~/.ssh/teufel_ed25519` by default.
@@ -23,21 +41,29 @@ Any extra arguments are passed to `ssh` (e.g. `./scripts/ssh-staging.sh -L 8080:
 
 ## deploy-staging
 
-Deploy to staging: **push `main`** (unless you pass skip), then **SSH to the server** and run the remote deploy script, which pulls latest, updates API and web, and restarts both. **Prerequisite:** First-time setup on the server is done (see [docs/deploy.md](../docs/deploy.md) §5 steps 1–3).
+**Push `main`**, then either **SSH** deploy or **GitHub Actions** (manual workflow).
 
-**PowerShell (Windows):**
+| Mode | Command |
+|------|---------|
+| SSH (default) | `.\scripts\deploy-staging.ps1` |
+| Same, no push first | `.\scripts\deploy-staging.ps1 -SkipPush` |
+| Trigger **Deploy staging** workflow | `.\scripts\deploy-staging.ps1 -UseGitHub` (needs `gh` CLI + repo secrets; see [docs/github-actions.md](../docs/github-actions.md)) |
+
+**Bash:** `./scripts/deploy-staging.sh` · `SKIP_PUSH=1 ./scripts/deploy-staging.sh`
+
+Server runs **`scripts/deploy-remote-staging.sh`** (staging repo under `/srv/tttc/staging/repo` or legacy `/srv/tttc/app/repo`). See [docs/deploy.md](../docs/deploy.md).
+
+---
+
+## release-prod
+
+**Semver tag + push** → GitHub deploys **prod** (`/srv/tttc/prod`). Only after prod server is provisioned.
+
 ```powershell
-.\scripts\deploy-staging.ps1
+.\scripts\release-prod.ps1 0.1.0
 ```
-Skip the push step (e.g. you already pushed): `.\scripts\deploy-staging.ps1 -SkipPush`
 
-**Bash:**
-```bash
-./scripts/deploy-staging.sh
-```
-Skip the push: `SKIP_PUSH=1 ./scripts/deploy-staging.sh`
-
-The remote script lives in the repo at `scripts/staging-deploy-remote.sh`; the server runs it after `git pull`.
+**Bash:** `./scripts/release-prod.sh 0.1.0`
 
 ---
 

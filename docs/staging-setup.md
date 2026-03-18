@@ -3,11 +3,14 @@
 **Treptower Teufel Club App — Staging environment**  
 *Complete reference for the current staging server and its configuration.*
 
+**Canonical paths (staging + prod on same box):** [server-layout.md](./server-layout.md)  
+**Implementation checklist:** [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md)
+
 ---
 
 ## 1. Overview
 
-Staging runs on a **single Hetzner Cloud server**. There is no private network, no separate DB server, and no release/rollback layout—by design. The goal is a simple, reproducible environment to develop and test deployment before production.
+The app runs on a **single Hetzner Cloud server** that will host **both staging and production** (isolated paths, ports, databases). There is no private network or separate DB server yet. **Target layout** is flat under **`/srv/tttc/staging/`** and **`/srv/tttc/prod/`** — see [server-layout.md](./server-layout.md). Older setups may still use legacy **`/srv/tttc/app/`** until migrated (same as staging-only).
 
 ---
 
@@ -204,13 +207,16 @@ CREATE DATABASE tttc_staging OWNER tttc_staging_user;
 
 Connection from the app will use this user and database. The password is only in a secure place (e.g. env or secrets), not in this document.
 
+**Production database** (`tttc_prod` / `tttc_prod_user`) is provisioned separately; see [server-layout.md](./server-layout.md) and the plan doc.
+
 ### 7.4 Python Virtual Environment
 
-| Item   | Value                          |
-|--------|---------------------------------|
-| **Path** | `/srv/tttc/app/api/.venv`     |
+| Item   | Value                                      |
+|--------|--------------------------------------------|
+| **Path (target)** | `/srv/tttc/staging/api/.venv`     |
+| **Path (legacy)** | `/srv/tttc/app/api/.venv` until migration |
 
-Created and used for the FastAPI application under `/srv/tttc/app/api`.
+Created and used for the FastAPI application under the staging api directory.
 
 ### 7.5 FastAPI (Proof of Concept)
 
@@ -245,34 +251,28 @@ The exact Node version was not recorded in the reference notes; it can be checke
 
 ## 8. Directory Structure on the Server
 
-The chosen layout under `/srv/tttc` is flat and simple (no release/current/shared model for staging).
+**Full picture (staging + prod, ports, systemd names):** [server-layout.md](./server-layout.md).
 
-### 8.1 Target Structure
+### 8.1 Staging target (flat)
 
 ```text
-/srv/tttc
-└── app
-    ├── api          ← Backend code + Python .venv
-    ├── web          ← Frontend code (built assets or source, depending on deploy)
-    ├── env          ← Server-side .env files (not in Git)
-    └── logs         ← Log files
+/srv/tttc/staging/
+├── repo/     ← Git clone (main)
+├── api/      ← Backend + .venv
+├── web/      ← Frontend build
+├── env/      ← api.env, …
+└── logs/
 ```
 
-### 8.2 Meaning of Each Directory
+### 8.2 Legacy layout (pre-migration)
 
-| Path              | Purpose |
-|-------------------|--------|
-| `/srv/tttc/app/api`  | FastAPI application and its virtualenv (e.g. `.venv`). |
-| `/srv/tttc/app/web`  | Frontend application or built output. |
-| `/srv/tttc/app/env`  | Environment files (e.g. `api.env`, `web.env`); never committed. |
-| `/srv/tttc/app/logs` | Application log files. |
+If you still have:
 
-### 8.3 Why No Release Model on Staging
+```text
+/srv/tttc/app/{repo,api,web,env,logs}
+```
 
-- Staging should stay simple.  
-- No rollback or multi-release layout required yet.  
-- A single target path per app (api, web) is enough.  
-- A proper release/current/shared model can be introduced for production later.
+that is **staging-only**, equivalent to the above under `app/` instead of `staging/`. Migrate to `/srv/tttc/staging/` per [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md).
 
 ---
 
@@ -284,24 +284,19 @@ The chosen layout under `/srv/tttc` is flat and simple (no release/current/share
 - Staging server `tttc-staging-01` (CPX22, Ubuntu 24.04, Nürnberg)
 - Public access via IPv4 (and IPv6 network)
 - SSH key and user `arved` with sudo
-- UFW enabled (SSH, 80, 443)
+- UFW enabled (SSH, 80, 443; 8000/5173 optional, often closed once Caddy is in front)
 - PostgreSQL installed; DB `tttc_staging` and user `tttc_staging_user` created
-- Python 3.12.3
-- Virtualenv at `/srv/tttc/app/api/.venv`
-- Minimal FastAPI health check run successfully
-- Node.js installed
-- Directory structure under `/srv/tttc/app` as above
+- Python 3.12.3, virtualenv under staging api dir (target: `/srv/tttc/staging/api/.venv`)
+- FastAPI API (health, db check) and deploy from repo
+- Node.js installed; frontend (Vite + Svelte) built and served on staging
+- Directory structure: target `/srv/tttc/staging/…` or legacy `/srv/tttc/app/…`
+- Caddy: HTTPS for staging-app and staging-api (see [caddy-staging.md](./caddy-staging.md)); prod hosts in plan
+- systemd: staging units (see [systemd-staging.md](./systemd-staging.md)); prod units in plan
+- Env on server: `/srv/tttc/staging/env/api.env` (target) or `/srv/tttc/app/env/api.env` (legacy)
 
 ### 9.2 Not Yet Done / Not Final
 
-- Real local project (backend + frontend as proper projects)
-- Real deploy process (from local repo to server)
-- Caddy installed and configured
-- systemd units for the app (FastAPI, and optionally frontend)
-- Frontend project (Svelte/SvelteKit) and its deploy
-- Domain/subdomain and routing (e.g. staging-app, staging-api)
-- Finalised secrets/env layout (e.g. `api.env`, `web.env` under `/srv/tttc/app/env`)
-- Production environment (separate doc)
+- Prod stack (`/srv/tttc/prod/`, `tttc_prod`, GitHub Actions, tag deploy) — [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md)
 
 ---
 
@@ -331,12 +326,13 @@ The chosen layout under `/srv/tttc` is flat and simple (no release/current/share
 | **Server**  | `tttc-staging-01`, ID `123092392`, `46.225.208.231` |
 | **SSH**     | `arved` or `root`, key: `C:\Users\arved\.ssh\teufel_ed25519` |
 | **Python**  | 3.12.3 |
-| **Venv**    | `/srv/tttc/app/api/.venv` |
-| **PostgreSQL** | DB: `tttc_staging`, User: `tttc_staging_user` |
-| **App dirs**   | `/srv/tttc/app/{api,web,env,logs}` |
-| **Caddy**   | Not yet configured |
-| **systemd** | Not yet configured |
+| **Venv**    | `/srv/tttc/staging/api/.venv` (target) |
+| **PostgreSQL** | Staging: `tttc_staging` / `tttc_staging_user`; prod: see [server-layout.md](./server-layout.md) |
+| **App dirs**   | Staging: `/srv/tttc/staging/{repo,api,web,env,logs}` |
+| **Staging URLs** | https://staging-app.treptower-teufel.de, https://staging-api.treptower-teufel.de |
+| **Caddy**   | Configured — see [caddy-staging.md](./caddy-staging.md) |
+| **systemd** | Optional — see [systemd-staging.md](./systemd-staging.md) |
 
 ---
 
-*This document describes the staging setup as it was established. For philosophy and “what/why”, see [philosophy.md](./philosophy.md). For next steps (local dev, deploy, Caddy, systemd), see the main project plan or task list.*
+*This document describes the staging server. Layout and prod: [server-layout.md](./server-layout.md). Rollout checklist: [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md). Philosophy: [philosophy.md](./philosophy.md). Deploy flow: [deploy.md](./deploy.md).*

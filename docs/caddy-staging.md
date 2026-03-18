@@ -38,9 +38,11 @@ sudo nano /etc/caddy/Caddyfile
 **Paste this (then fix the domain if needed):**
 
 ```caddyfile
-# Staging frontend — SPA + /api proxied to API
+# Staging frontend — SPA + /api proxied to API (prefix stripped so backend gets /health not /api/health)
 staging-app.treptower-teufel.de {
-	reverse_proxy /api/* localhost:8000
+	handle_path /api/* {
+		reverse_proxy localhost:8000
+	}
 	reverse_proxy localhost:5173
 }
 
@@ -50,7 +52,7 @@ staging-api.treptower-teufel.de {
 }
 ```
 
-- **staging-app:** Browser requests go here. `/api/*` → API (port 8000); everything else → frontend (port 5173).
+- **staging-app:** Requests to `/api/*` are sent to the API with the `/api` prefix stripped (e.g. `/api/health` → backend sees `/health`). Everything else → frontend (port 5173).
 - **staging-api:** For calling the API by hostname (e.g. `https://staging-api.treptower-teufel.de/health`).
 
 Save and exit (Ctrl+O, Enter, Ctrl+X).
@@ -114,11 +116,38 @@ If you later open the API directly at **staging-api.treptower-teufel.de**, that�
 
 ---
 
-## 7. Summary
+## 7. Summary (staging)
 
 | URL | Serves |
 |-----|--------|
 | https://staging-app.treptower-teufel.de | Frontend (Vite preview on 5173); `/api/*` → API (8000) |
 | https://staging-api.treptower-teufel.de | API only (8000) |
 
-Caddy: **systemd** service `caddy`, config **/etc/caddy/Caddyfile**. After editing config: `sudo caddy validate --config /etc/caddy/Caddyfile` then `sudo systemctl reload caddy`.
+---
+
+## 8. Production hosts (add when prod stack exists)
+
+Prod uses **different localhost ports** ([server-layout.md](./server-layout.md)): API **8001**, web **5174**.
+
+Append to the same **Caddyfile** (after staging blocks):
+
+```caddyfile
+app.treptower-teufel.de {
+	handle_path /api/* {
+		reverse_proxy localhost:8001
+	}
+	reverse_proxy localhost:5174
+}
+
+api.treptower-teufel.de {
+	reverse_proxy localhost:8001
+}
+```
+
+Then `caddy validate` and `systemctl reload caddy`.
+
+---
+
+## 9. Caddy service
+
+**systemd** `caddy`, config **/etc/caddy/Caddyfile**. After edits: `sudo caddy validate --config /etc/caddy/Caddyfile` then `sudo systemctl reload caddy`.

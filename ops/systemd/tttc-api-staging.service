@@ -1,0 +1,16 @@
+[Unit]
+Description=TTTC API staging (FastAPI)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=arved
+Group=arved
+WorkingDirectory=/srv/tttc/staging/api
+EnvironmentFile=/srv/tttc/staging/env/api.env
+ExecStart=/srv/tttc/staging/api/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

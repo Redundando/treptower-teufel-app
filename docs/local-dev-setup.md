@@ -76,10 +76,17 @@ python -m venv .venv
 pip install -e .
 ```
 
-**Start the server** (from project root, so `.env` is found):
+**Start the server** — easiest from repo root:
 
 ```powershell
-cd "c:\dev\treptower teufel app api"   # or your repo path
+.\scripts\run-api.ps1
+```
+
+(Optional: `.\scripts\run-api.ps1 --port 8001` if port 8000 is busy.)
+
+Or manually from project root (so `.env` is found):
+
+```powershell
 api\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --app-dir api
 ```
 

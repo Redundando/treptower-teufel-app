@@ -1,7 +1,8 @@
 # Deploy
 
 **Single place for everything about deploying the app.**  
-Server and env details live in [staging-setup.md](./staging-setup.md) and [env-and-secrets.md](./env-and-secrets.md); this doc focuses on **what to do** and **where things go**.
+**Target server paths (staging + prod):** [server-layout.md](./server-layout.md). **Rollout checklist:** [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md).  
+Server and env details: [staging-setup.md](./staging-setup.md), [env-and-secrets.md](./env-and-secrets.md).
 
 ---
 
@@ -43,11 +44,17 @@ We do **not** commit secrets; we do **not** manually edit code on the server. We
 
 ---
 
-## 4. Current state (no deploy scripts yet)
+## 4. Deploy automation (current)
 
-As of now we have **no automated deploy scripts**. Deploy is **manual**: SSH in, pull (or clone), install deps if needed, restart the app if it’s running via systemd (once we add that).
+| What | Where |
+|------|--------|
+| **Staging (SSH from your PC)** | `.\scripts\deploy-staging.ps1` → runs `scripts/deploy-remote-staging.sh` on the server |
+| **Staging (GitHub)** | Workflow **Deploy staging** (manual dispatch); secrets: [github-actions.md](./github-actions.md) |
+| **Production** | Push semver tag → workflow **Deploy production**; local helper `.\scripts\release-prod.ps1 0.1.0` |
 
-Below is the intended flow and manual steps. When we add scripts (e.g. `ops/deploy/staging.sh` or similar), we’ll document them here and replace the manual steps.
+Remote scripts: **`scripts/deploy-remote-staging.sh`**, **`scripts/deploy-remote-prod.sh`**. Paths: [server-layout.md](./server-layout.md).
+
+First-time server setup (clone, venv, env) is still partly **manual**; see §5 and [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md).
 
 ---
 

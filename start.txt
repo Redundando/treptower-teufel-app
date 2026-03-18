@@ -1,6 +1,8 @@
 # Treptower Teufel Club App / Mitglieder-Backend
 Stand: 2026-03-08
 
+**Hinweis:** Die aktuelle, englische Projekt-Dokumentation liegt unter `docs/` (philosophy.md, staging-setup.md, deploy.md, local-dev-setup.md usw.). Diese Datei ist die ursprüngliche deutsche Gedächtnisstütze und wird für die laufende Referenz nicht mehr gepflegt.
+
 ## Zweck dieses Dokuments
 
 Dieses Dokument fasst die bisherige Grundidee, Architektur-Philosophie, Hosting-Entscheidungen, den aktuellen Stand des Staging-Servers und die offenen nächsten Schritte zusammen.

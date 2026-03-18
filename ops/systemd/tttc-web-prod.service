@@ -1,0 +1,17 @@
+[Unit]
+Description=TTTC Web production (Vite preview)
+After=network.target tttc-api-prod.service
+
+[Service]
+Type=simple
+User=arved
+Group=arved
+WorkingDirectory=/srv/tttc/prod/web
+ExecStart=/usr/bin/npm run preview:prod
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PATH=/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target
