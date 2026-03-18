@@ -20,12 +20,6 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            echo "=== Remote identity ==="
-            whoami
-            id
-            echo "sudo -n systemctl restart tttc-api-prod exit code:"
-            sudo -n systemctl restart tttc-api-prod && echo "OK (restart allowed)" || echo "FAIL (restart not allowed without password)"
-
             export GIT_REF="${{ github.ref_name }}"
             cd /srv/tttc/prod/repo
             bash scripts/deploy-remote-prod.sh
