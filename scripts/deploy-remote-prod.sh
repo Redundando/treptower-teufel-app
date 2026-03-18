@@ -32,14 +32,20 @@ fi
 echo "=== Updating API ==="
 (cd "$REPO_ROOT/api" && tar cf - .) | (cd "$APP_ROOT/api" && tar xf -)
 cd "$APP_ROOT/api"
-.venv/bin/pip install -e . -q
+if [ ! -x .venv/bin/python ]; then
+  echo "Missing venv python at $APP_ROOT/api/.venv/bin/python"
+  exit 1
+fi
+.venv/bin/python -m pip install -e . -q
 
 if [ ! -f /etc/systemd/system/tttc-api-prod.service ]; then
   echo "Install tttc-api-prod.service (ops/systemd/) first."
   exit 1
 fi
 echo "Restarting prod API..."
-if sudo -n true 2>/dev/null; then
+if [ "$(id -u)" -eq 0 ]; then
+  systemctl restart tttc-api-prod
+elif sudo -n true 2>/dev/null; then
   sudo -n systemctl restart tttc-api-prod
 else
   echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."
@@ -61,7 +67,9 @@ if [ ! -f /etc/systemd/system/tttc-web-prod.service ]; then
   echo "Install tttc-web-prod.service first."
   exit 1
 fi
-if sudo -n true 2>/dev/null; then
+if [ "$(id -u)" -eq 0 ]; then
+  systemctl restart tttc-web-prod
+elif sudo -n true 2>/dev/null; then
   sudo -n systemctl restart tttc-web-prod
 else
   echo "No passwordless sudo for systemd. Configure sudoers for restart, or run deploy manually on the server."

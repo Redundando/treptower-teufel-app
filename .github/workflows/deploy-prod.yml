@@ -20,6 +20,12 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
+            echo "=== Remote identity ==="
+            whoami
+            id
+            echo "sudo -n true exit code:"
+            sudo -n true && echo "OK (passwordless sudo works)" || echo "FAIL (no passwordless sudo)"
+
             export GIT_REF="${{ github.ref_name }}"
             cd /srv/tttc/prod/repo
             bash scripts/deploy-remote-prod.sh
