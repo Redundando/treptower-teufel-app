@@ -34,19 +34,22 @@ You can create `.env.staging` only when needed. Many setups never need it and on
 
 ---
 
-## 3. On the Staging Server
+## 3. On the Server (staging + prod)
 
-As in [staging-setup.md](./staging-setup.md):
+Canonical layout is in [server-layout.md](./server-layout.md).
 
-- Env files live under **`/srv/tttc/app/env/`**, e.g.:
-  - `api.env` — FastAPI/backend
-  - `web.env` — frontend build/runtime, if needed
+- Env files live under:
+  - **Staging:** **`/srv/tttc/staging/env/`** (e.g. `api.env`)
+  - **Prod:** **`/srv/tttc/prod/env/`** (e.g. `api.env`)
 - These are created and edited **on the server** (or via deploy that writes them from a secure store). They are **never** in Git.
+
+**Legacy note:** older docs/paths used `/srv/tttc/app/env/` for staging only.
 
 So:
 
 - **Locally:** `.env` (and optionally `.env.staging`) for your machine.
-- **Staging:** `/srv/tttc/app/env/*.env` on the server.
+- **Staging:** `/srv/tttc/staging/env/*.env`
+- **Prod:** `/srv/tttc/prod/env/*.env`
 
 ---
 
@@ -57,7 +60,8 @@ So:
 | Local dev | `.env` | Real local DB URL, secrets, etc. | No |
 | Local → staging | `.env.staging` (optional) | Staging URLs, DB, secrets | No |
 | Template | `.env.example` | Variable names + placeholders | Yes |
-| Staging server | `/srv/tttc/app/env/api.env` (etc.) | Real staging config | N/A (not in repo) |
+| Staging server | `/srv/tttc/staging/env/api.env` (etc.) | Real staging config | N/A (not in repo) |
+| Prod server | `/srv/tttc/prod/env/api.env` (etc.) | Real prod config | N/A (not in repo) |
 
 ---
 

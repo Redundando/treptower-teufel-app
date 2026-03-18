@@ -31,16 +31,18 @@ We do **not** commit secrets; we do **not** manually edit code on the server. We
 |------|--------|
 | **Server** | `tttc-staging-01` — see [staging-setup.md](./staging-setup.md) for full details. |
 | **SSH** | `arved@46.225.208.231` with key `C:\Users\arved\.ssh\teufel_ed25519` |
-| **App base path** | `/srv/tttc/app` |
+| **App base path** | `/srv/tttc/staging` |
 
 **Deploy destinations:**
 
 | What | Path on server |
 |------|-----------------|
-| Backend (API) | `/srv/tttc/app/api` |
-| Frontend (web) | `/srv/tttc/app/web` |
-| Env files | `/srv/tttc/app/env/` (e.g. `api.env`, `web.env`) — **not** in Git. |
-| Logs | `/srv/tttc/app/logs` |
+| Backend (API) | `/srv/tttc/staging/api` |
+| Frontend (web) | `/srv/tttc/staging/web` |
+| Env files | `/srv/tttc/staging/env/` (e.g. `api.env`) — **not** in Git. |
+| Logs | `/srv/tttc/staging/logs` |
+
+**Legacy note:** older staging-only setups used `/srv/tttc/app/...`.
 
 ---
 
@@ -68,9 +70,9 @@ Use this checklist once to get the API and frontend running on staging. **Prereq
 
 1. **Dirs and clone**
    ```bash
-   sudo mkdir -p /srv/tttc/app
-   sudo chown arved:arved /srv/tttc/app
-   cd /srv/tttc/app
+   sudo mkdir -p /srv/tttc/staging
+   sudo chown arved:arved /srv/tttc/staging
+   cd /srv/tttc/staging
    git clone https://github.com/Redundando/treptower-teufel-app.git repo
    ```
 
@@ -83,38 +85,39 @@ Use this checklist once to get the API and frontend running on staging. **Prereq
 
 3. **API: copy, venv, env**
    ```bash
-   cp -r repo/api /srv/tttc/app/
-   cd /srv/tttc/app/api
+   cp -r repo/api /srv/tttc/staging/
+   cd /srv/tttc/staging/api
    python3 -m venv .venv
-   .venv/bin/pip install -e .
-   mkdir -p /srv/tttc/app/env
+   .venv/bin/python -m pip install -e .
+   mkdir -p /srv/tttc/staging/env
    ```
-   Create `/srv/tttc/app/env/api.env` with one line (use your real staging DB password):
+   Create `/srv/tttc/staging/env/api.env` with one line (use your real staging DB password):
    ```bash
-   echo 'DATABASE_URL=postgresql://tttc_staging_user:YOUR_STAGING_PASSWORD@localhost:5432/tttc_staging' | nano /srv/tttc/app/env/api.env
+   echo 'DATABASE_URL=postgresql://tttc_staging_user:YOUR_STAGING_PASSWORD@localhost:5432/tttc_staging' | nano /srv/tttc/staging/env/api.env
    ```
-   (Or edit with `nano /srv/tttc/app/env/api.env` and paste the line.)
+   (Or edit with `nano /srv/tttc/staging/env/api.env` and paste the line.)
 
 4. **Run API in the background**
    ```bash
-   cd /srv/tttc/app/api
-   nohup .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /srv/tttc/app/logs/api.log 2>&1 &
+   cd /srv/tttc/staging/api
+   mkdir -p /srv/tttc/staging/logs
+   nohup .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 > /srv/tttc/staging/logs/api.log 2>&1 &
    ```
-   Create logs dir if needed: `mkdir -p /srv/tttc/app/logs`.  
    Check: `curl -s http://localhost:8000/health` → `{"status":"ok"}`.
 
 5. **Frontend: copy, install, build**
    ```bash
-   cp -r repo/web /srv/tttc/app/
-   cd /srv/tttc/app/web
+   cp -r repo/web /srv/tttc/staging/
+   cd /srv/tttc/staging/web
    npm install
    npm run build
    ```
 
 6. **Run frontend preview (serves `dist/` and proxies `/api` to the API)**
    ```bash
-   cd /srv/tttc/app/web
-   nohup npm run preview:staging > /srv/tttc/app/logs/web.log 2>&1 &
+   cd /srv/tttc/staging/web
+   mkdir -p /srv/tttc/staging/logs
+   nohup npm run preview:staging > /srv/tttc/staging/logs/web.log 2>&1 &
    ```
    Check: `curl -s http://localhost:5173` → HTML.
 
@@ -128,6 +131,8 @@ To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (
 ---
 
 ## 6. Staging deploy — manual steps (reference)
+
+**Note:** These steps describe the **legacy** staging-only layout under `/srv/tttc/app`. For the current layout use `/srv/tttc/staging` (see [server-layout.md](./server-layout.md)) and the deploy scripts/workflows in §4.
 
 ### First time (clone and one-time setup)
 
@@ -190,7 +195,9 @@ To stop later: `pkill -f "uvicorn app.main:app"` and `pkill -f "vite preview"` (
 
 ## 7. Env and secrets on the server
 
-- Env files live under **`/srv/tttc/app/env/`** (e.g. `api.env`).
+- Env files live under:
+  - **Staging:** `/srv/tttc/staging/env/` (e.g. `api.env`)
+  - **Prod:** `/srv/tttc/prod/env/` (e.g. `api.env`)
 - They are **created and edited on the server** (or via a secure deploy step), **never** committed.
 - See [env-and-secrets.md](./env-and-secrets.md) for the pattern and [staging-setup.md](./staging-setup.md) for DB name/user (e.g. `tttc_staging`, `tttc_staging_user`).
 

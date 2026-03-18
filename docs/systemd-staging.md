@@ -30,28 +30,46 @@ All under **`ops/systemd/`**. User `arved`; paths in [server-layout.md](./server
 
 SSH in, then:
 
+### 2.1 Current setup (staging + prod)
+
 **Copy the unit files**
 
 ```bash
-sudo cp /srv/tttc/app/repo/ops/systemd/tttc-api.service /etc/systemd/system/
-sudo cp /srv/tttc/app/repo/ops/systemd/tttc-web.service /etc/systemd/system/
+sudo cp /srv/tttc/staging/repo/ops/systemd/tttc-api-staging.service /etc/systemd/system/
+sudo cp /srv/tttc/staging/repo/ops/systemd/tttc-web-staging.service /etc/systemd/system/
+sudo cp /srv/tttc/prod/repo/ops/systemd/tttc-api-prod.service /etc/systemd/system/
+sudo cp /srv/tttc/prod/repo/ops/systemd/tttc-web-prod.service /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
 **Enable and start**
 
 ```bash
-sudo systemctl enable tttc-api tttc-web
-sudo systemctl start tttc-api tttc-web
-sudo systemctl status tttc-api tttc-web
+sudo systemctl enable tttc-api-staging tttc-web-staging tttc-api-prod tttc-web-prod
+sudo systemctl start tttc-api-staging tttc-web-staging tttc-api-prod tttc-web-prod
+sudo systemctl status tttc-api-staging tttc-web-staging tttc-api-prod tttc-web-prod
 ```
 
 **Check**
 
-- API: `curl -s http://localhost:8000/health` → `{"status":"ok"}`
-- Frontend: `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173` → 200
+- Staging API: `curl -s http://localhost:8000/health` → `{"status":"ok"}`
+- Staging web: `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173` → 200
+- Prod API: `curl -s http://localhost:8001/health` → `{"status":"ok"}`
+- Prod web: `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5174` → 200
 
 After this, the **deploy script** will restart these services instead of starting processes with nohup.
+
+### 2.2 Legacy setup (`/srv/tttc/app`)
+
+If you still run the old single-tree staging layout, the legacy unit files are:
+
+```bash
+sudo cp /srv/tttc/app/repo/ops/systemd/tttc-api.service /etc/systemd/system/
+sudo cp /srv/tttc/app/repo/ops/systemd/tttc-web.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable tttc-api tttc-web
+sudo systemctl start tttc-api tttc-web
+```
 
 ---
 
@@ -59,12 +77,12 @@ After this, the **deploy script** will restart these services instead of startin
 
 | Task | Command |
 |------|--------|
-| Status | `sudo systemctl status tttc-api` / `tttc-web` |
-| Restart | `sudo systemctl restart tttc-api` / `tttc-web` |
-| Logs (last) | `sudo journalctl -u tttc-api -n 50` (same for `tttc-web`) |
-| Logs (follow) | `sudo journalctl -u tttc-api -f` |
-| Stop | `sudo systemctl stop tttc-api` / `tttc-web` |
-| Disable at boot | `sudo systemctl disable tttc-api` / `tttc-web` |
+| Status | `sudo systemctl status tttc-api-staging tttc-web-staging tttc-api-prod tttc-web-prod` |
+| Restart | `sudo systemctl restart tttc-api-staging tttc-web-staging` (or `...-prod`) |
+| Logs (last) | `sudo journalctl -u tttc-api-staging -n 50` (or `...-prod`) |
+| Logs (follow) | `sudo journalctl -u tttc-api-staging -f` |
+| Stop | `sudo systemctl stop tttc-api-staging tttc-web-staging` |
+| Disable at boot | `sudo systemctl disable tttc-api-staging tttc-web-staging` |
 
 ---
 
@@ -73,6 +91,8 @@ After this, the **deploy script** will restart these services instead of startin
 When you run **`.\scripts\deploy-staging.ps1`**, the remote script will:
 
 1. Pull, update API and web files, install deps, build.
-2. Run **`sudo systemctl restart tttc-api tttc-web`** (if the units are installed).
+2. Restart the right units (when allowed by sudoers):
+   - `sudo systemctl restart tttc-api-staging tttc-web-staging`
+   - `sudo systemctl restart tttc-api-prod tttc-web-prod`
 
 No more pkill + nohup. If you haven’t set up systemd yet, the deploy script still uses nohup (see script logic).
