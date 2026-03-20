@@ -67,7 +67,7 @@ fi
 rm -rf "$APP_ROOT/web"
 cp -r "$REPO_ROOT/web" "$APP_ROOT/web"
 cd "$APP_ROOT/web"
-npm install --silent
+npm install --silent --legacy-peer-deps
 npm run build
 
 if [ ! -f /etc/systemd/system/tttc-web-prod.service ]; then
