@@ -67,8 +67,14 @@ fi
 rm -rf "$APP_ROOT/web"
 cp -r "$REPO_ROOT/web" "$APP_ROOT/web"
 cd "$APP_ROOT/web"
+echo "=== Web: npm install ==="
 npm install --silent --legacy-peer-deps
+echo "=== Web: npm run build ==="
 npm run build
+if [ ! -f dist/index.html ]; then
+  echo "Web build failed: missing dist/index.html"
+  exit 1
+fi
 
 if [ ! -f /etc/systemd/system/tttc-web-prod.service ]; then
   echo "Install tttc-web-prod.service first."
