@@ -98,3 +98,18 @@ export async function fetchMembers(
   }
 }
 
+export async function syncNetxpMembers(
+  token: string,
+): Promise<{ job_id: string }> {
+  const r = await fetch('/api/netxp-members/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (!r.ok) {
+    throw new Error((await parseDetail(r)) ?? `Start NetXP sync failed (${r.status})`)
+  }
+
+  return (await r.json()) as { job_id: string }
+}
+

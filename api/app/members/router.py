@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import date, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
+from streamator import JobEmitter
 
 from app.auth.deps import AuthenticatedUser, require_admin
 from app.db.connection import connect
+from app.netxp_sync_members import run_sync as netxp_run_sync
 
 
 router = APIRouter()
@@ -66,6 +69,10 @@ class MembersListResponse(BaseModel):
     page_size: int
     total: int
     items: list[MemberOut]
+
+
+class NetxpSyncStartResponse(BaseModel):
+    job_id: str
 
 
 def _normalize_search(search: str | None) -> str | None:
@@ -160,4 +167,37 @@ async def list_members(
         }
     finally:
         await conn.close()
+
+
+@router.post("/netxp-members/sync", tags=["admin", "netxp-members"])
+async def netxp_sync_members(_: AuthenticatedUser = Depends(require_admin)) -> NetxpSyncStartResponse:
+    """
+    Trigger NetXP Verein members sync in write-mode (DB upsert + inactivate missing).
+    """
+    conn = await connect()
+    try:
+        running = await conn.fetchval(
+            """
+            SELECT 1
+            FROM netxp_sync_runs
+            WHERE status = 'running' AND finished_at IS NULL
+            ORDER BY started_at DESC
+            LIMIT 1
+            """
+        )
+        if running:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="NetXP sync already running")
+    finally:
+        await conn.close()
+
+    emitter = JobEmitter()
+
+    async def _run() -> None:
+        async with emitter:
+            await netxp_run_sync(dry_run=False, limit=None, emit_event=emitter.emit)
+
+    task = asyncio.create_task(_run())
+    emitter.track(task)
+
+    return NetxpSyncStartResponse(job_id=str(emitter.job_id))
 

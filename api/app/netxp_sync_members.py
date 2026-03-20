@@ -16,7 +16,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, Callable, TypedDict
 
 from app.config import CONFIG
 from app.db.connection import connect
@@ -41,6 +41,19 @@ TYPED_FIELDS_BY_HEADER: dict[str, str] = {
     "Beitragsnamen": "beitragsnamen",
     "Info": "info",
 }
+
+
+def _maybe_emit_event(
+    emit_event: Callable[[dict[str, Any]], None] | None,
+    payload: dict[str, Any],
+) -> None:
+    if not emit_event:
+        return
+    try:
+        emit_event(payload)
+    except Exception:
+        # Never fail the sync because an optional streaming callback misbehaves.
+        return
 
 
 DATE_GERMAN_RE = re.compile(r"^(?P<dd>\d{2})\.(?P<mm>\d{2})\.(?P<yyyy>\d{4})$")
@@ -585,8 +598,22 @@ async def download_and_parse_netxp_csv(
             pass
 
 
-async def run_sync(*, dry_run: bool, limit: int | None) -> int:
+async def run_sync(
+    *,
+    dry_run: bool,
+    limit: int | None,
+    emit_event: Callable[[dict[str, Any]], None] | None = None,
+) -> int:
     started = time.time()
+
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_started",
+            "dry_run": dry_run,
+            "limit": limit,
+        },
+    )
 
     cfg = load_netxp_sync_config()
     netxp_csv = await download_and_parse_netxp_csv(
@@ -595,6 +622,17 @@ async def run_sync(*, dry_run: bool, limit: int | None) -> int:
         auth_password=cfg["auth_password"],
         timeout_seconds=cfg["timeout_seconds"],
         limit=limit,
+    )
+
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_download_and_parse_done",
+            "download_bytes": netxp_csv.download_bytes,
+            "encoding_used": netxp_csv.encoding_used,
+            "row_count": len(netxp_csv.parsed_rows),
+            "file_hash": netxp_csv.file_hash,
+        },
     )
 
     conn = await connect()
@@ -611,6 +649,7 @@ async def run_sync(*, dry_run: bool, limit: int | None) -> int:
             dry_run=dry_run,
             limit=limit,
             started=started,
+            emit_event=emit_event,
         )
     finally:
         await conn.close()
@@ -629,6 +668,7 @@ async def sync_run_lifecycle(
     dry_run: bool,
     limit: int | None,
     started: float,
+    emit_event: Callable[[dict[str, Any]], None] | None,
 ) -> int:
     netxp_ids = [r.netxp_id for r in parsed_rows]
     run_id = await create_sync_run_record(
@@ -640,6 +680,14 @@ async def sync_run_lifecycle(
         headers=headers,
         file_hash=file_hash,
     )
+
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_run_record_created",
+            "run_id": str(run_id),
+        },
+    )
     try:
         existing_by_id = await fetch_existing_members(conn, netxp_ids=netxp_ids)
         inserted, updated, unchanged = compute_diff_counts(
@@ -647,6 +695,18 @@ async def sync_run_lifecycle(
             existing_by_id=existing_by_id,
         )
         error_count = 0
+
+        _maybe_emit_event(
+            emit_event,
+            {
+                "event": "netxp_sync_diff_counts",
+                "inserted": inserted,
+                "updated": updated,
+                "unchanged": unchanged,
+                "dry_run": dry_run,
+                "inactivation_limit": limit,
+            },
+        )
 
         if dry_run:
             return await perform_dry_run(
@@ -660,6 +720,7 @@ async def sync_run_lifecycle(
                 unchanged=unchanged,
                 inactivation_limit=limit,
                 error_count=error_count,
+                emit_event=emit_event,
             )
 
         return await perform_write_mode(
@@ -672,8 +733,16 @@ async def sync_run_lifecycle(
             updated=updated,
             unchanged=unchanged,
             error_count=error_count,
+            emit_event=emit_event,
         )
     except Exception as e:
+        _maybe_emit_event(
+            emit_event,
+            {
+                "event": "netxp_sync_failed",
+                "error": str(e)[:2000],
+            },
+        )
         await mark_sync_run_failed(conn, run_id=run_id, error_message=str(e))
         raise
 
@@ -690,6 +759,7 @@ async def perform_dry_run(
     unchanged: int,
     inactivation_limit: int | None,
     error_count: int,
+    emit_event: Callable[[dict[str, Any]], None] | None,
 ) -> int:
     if inactivation_limit is not None:
         inactivated = 0
@@ -717,6 +787,18 @@ async def perform_dry_run(
         notes=notes,
     )
 
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_dry_run_done",
+            "inserted": inserted,
+            "updated": updated,
+            "unchanged": unchanged,
+            "inactivated": inactivated,
+            "error_count": error_count,
+        },
+    )
+
     duration_s = time.time() - started
     print(
         f"NetXP sync dry-run complete: rows={len(parsed_rows)} inserted={inserted} updated={updated} "
@@ -736,7 +818,18 @@ async def perform_write_mode(
     updated: int,
     unchanged: int,
     error_count: int,
+    emit_event: Callable[[dict[str, Any]], None] | None,
 ) -> int:
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_write_started",
+            "inserted": inserted,
+            "updated": updated,
+            "unchanged": unchanged,
+        },
+    )
+
     # Write mode (transaction): upsert everything, then inactivate missing members.
     insert_query = build_members_upsert_query(MEMBERS_COLUMNS)
     values = build_members_upsert_values(
@@ -763,6 +856,18 @@ async def perform_write_mode(
         error_count=error_count,
     )
 
+    _maybe_emit_event(
+        emit_event,
+        {
+            "event": "netxp_sync_success",
+            "inserted": inserted,
+            "updated": updated,
+            "unchanged": unchanged,
+            "inactivated": inactivated_written,
+            "error_count": error_count,
+        },
+    )
+
     duration_s = time.time() - started
     print(
         f"NetXP sync complete: rows={len(parsed_rows)} inserted={inserted} updated={updated} "
@@ -779,6 +884,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Download + parse + diff, but do not write to DB.",
     )
     parser.add_argument(
+        "--progress-events",
+        action="store_true",
+        help="Emit structured progress events as JSON lines to stdout.",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -790,8 +900,15 @@ def main(argv: list[str] | None = None) -> int:
         print("--limit is only supported together with --dry-run", file=sys.stderr)
         return 2
 
+    emit_event: Callable[[dict[str, Any]], None] | None = None
+    if args.progress_events:
+        def emit_event_fn(payload: dict[str, Any]) -> None:
+            print(json.dumps(payload, ensure_ascii=False), flush=True)
+
+        emit_event = emit_event_fn
+
     try:
-        return asyncio.run(run_sync(dry_run=args.dry_run, limit=args.limit))
+        return asyncio.run(run_sync(dry_run=args.dry_run, limit=args.limit, emit_event=emit_event))
     except Exception as e:
         print(f"NetXP sync failed: {e}", file=sys.stderr)
         return 1
