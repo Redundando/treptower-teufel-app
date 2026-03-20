@@ -20,6 +20,14 @@ dev = [
     "httpx>=0.27.0",
 ]
 
+[tool.setuptools.packages.find]
+# The API folder has two top-level directories: `app/` (Python package) and
+# `migrations/` (SQL migrations, not a Python package). Without explicit
+# discovery config, setuptools aborts when it detects multiple candidates.
+where = ["."]
+include = ["app*"]
+exclude = ["migrations*"]
+
 [tool.uvicorn]
 app = "app.main:app"
 reload = true
