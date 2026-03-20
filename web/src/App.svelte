@@ -1,31 +1,25 @@
 <script lang="ts">
-  let apiStatus = $state('…')
-  async function checkApi() {
-    try {
-      const r = await fetch('/api/health')
-      const j = await r.json()
-      apiStatus = r.ok ? `API: ${j.status}` : `API: ${r.status}`
-    } catch (e) {
-      apiStatus = 'API: offline'
-    }
-  }
-  checkApi()
+  import { onMount } from 'svelte'
+  import { Route, Router } from 'svelte-navigator'
+  import Layout from './layout/Layout.svelte'
+  import IndexPage from './routes/IndexPage.svelte'
+  import LoginPage from './routes/LoginPage.svelte'
+  import AdminCreateUserPage from './routes/AdminCreateUserPage.svelte'
+  import AdminNetxpMembersPage from './routes/AdminNetxpMembersPage.svelte'
+  import { bootstrapAuth } from './stores/auth'
+
+  onMount(() => {
+    void bootstrapAuth()
+  })
 </script>
 
-<main>
-  <h1>Hello, Treptower Teufel</h1>
-  <p>{apiStatus}</p>
-</main>
+<Router>
+  <Layout>
+    <Route path="/" component={IndexPage} />
+    <Route path="/login" component={LoginPage} />
+    <Route path="/admin/create-user" component={AdminCreateUserPage} />
+    <Route path="/admin/netxp-members" component={AdminNetxpMembersPage} />
+    <Route path="*" component={IndexPage} />
+  </Layout>
+</Router>
 
-<style>
-  main {
-    font-family: system-ui, sans-serif;
-    max-width: 40ch;
-    margin: 4rem auto;
-    padding: 0 1rem;
-  }
-  h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-</style>

@@ -1,0 +1,133 @@
+@use "./styles/tokens.scss" as t;
+
+:root {
+  font-family: Arial, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: t.$kk-surface;
+  color: t.$kk-text;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+label {
+  display: block;
+  margin-top: t.$kk-space-m;
+  font-size: 14px;
+  color: t.$kk-text;
+}
+
+// Flat, consistent form controls.
+// Avoid affecting checkboxes/radios, which need different layout.
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  width: 100%;
+  padding: t.$kk-space-s t.$kk-space-l;
+  margin-top: t.$kk-space-xs;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  background: t.$kk-surface;
+  color: t.$kk-text;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+input[type='checkbox'] {
+  accent-color: t.$kk-brand;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+// Links: look/behave like links immediately; underline on hover/focus.
+a {
+  color: t.$kk-brand;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a:focus-visible {
+  outline: 2px solid t.$kk-focus;
+  outline-offset: 2px;
+  border-radius: t.$kk-radius;
+}
+
+// Focus ring (consistent for keyboard users).
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid t.$kk-focus;
+  outline-offset: 2px;
+}
+
+// Typography
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 12px 0 16px 0;
+  color: t.$kk-text;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 26px;
+  line-height: 1.15;
+}
+h2 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+h3 {
+  font-size: 20px;
+  line-height: 1.25;
+}
+h4,
+h5,
+h6 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+// Compact framed tables (container handles the outer border/radius).
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 4px 8px;
+  vertical-align: top;
+  text-align: left;
+  white-space: nowrap;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+thead th {
+  background: t.$kk-surface-tint;
+  border-bottom: 1px solid t.$kk-border;
+  font-weight: 700;
+}
+tbody td {
+  border-bottom: 1px solid t.$kk-border;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+

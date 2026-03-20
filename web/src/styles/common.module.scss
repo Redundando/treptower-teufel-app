@@ -1,0 +1,338 @@
+@use './tokens.scss' as t;
+
+.header {
+  background: t.$kk-brand;
+  color: #fff;
+  border-bottom: 1px solid t.$kk-brand-hover;
+}
+
+.headerInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: t.$kk-space-s t.$kk-space-side;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$kk-space-m;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.desktopNav {
+  display: flex;
+  align-items: center;
+  gap: t.$kk-space-xs;
+}
+
+.navItem {
+  color: #fff !important;
+  text-decoration: none;
+  padding: t.$kk-space-s t.$kk-space-s;
+  border-radius: t.$kk-radius;
+}
+.navItem:hover {
+  background: t.$kk-brand-hover;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.navItemButton {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  padding: t.$kk-space-s t.$kk-space-s;
+  border-radius: t.$kk-radius;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.navItemButton:hover {
+  background: t.$kk-brand-hover;
+}
+
+.navDropdown {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: t.$kk-surface;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  min-width: 220px;
+  padding: t.$kk-space-xs 0;
+  z-index: 10;
+}
+
+.dropdownItem {
+  display: block;
+  padding: t.$kk-space-s t.$kk-space-m;
+  color: t.$kk-brand;
+  text-decoration: none;
+}
+.dropdownItem:hover {
+  background: t.$kk-surface-tint;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: t.$kk-space-s;
+}
+
+.userInfo {
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  padding: t.$kk-space-s t.$kk-space-m;
+  border-radius: t.$kk-radius;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.logoutBtn:hover {
+  background: t.$kk-brand-hover;
+}
+
+.hamburger {
+  display: none;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: #fff;
+  border-radius: t.$kk-radius;
+  padding: t.$kk-space-xs t.$kk-space-s;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mobileMenu {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 t.$kk-space-side t.$kk-space-m;
+}
+
+.mobileMenuPanel {
+  background: t.$kk-surface;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  padding: t.$kk-space-s;
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  gap: t.$kk-space-xs;
+}
+
+.mobileNavItem {
+  text-decoration: none;
+  color: t.$kk-brand;
+  padding: t.$kk-space-s t.$kk-space-m;
+  border-radius: t.$kk-radius;
+}
+.mobileNavItem:hover {
+  background: t.$kk-surface-tint;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mobileNavItemButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: t.$kk-space-s t.$kk-space-m;
+  border-radius: t.$kk-radius;
+  font: inherit;
+  color: t.$kk-brand;
+  text-align: left;
+}
+.mobileNavItemButton:hover {
+  background: t.$kk-surface-tint;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mobileAdminDropdown {
+  border-top: 1px dotted t.$kk-border;
+  margin-top: t.$kk-space-s;
+  padding-top: t.$kk-space-s;
+}
+
+.mobileAdminItems {
+  display: flex;
+  flex-direction: column;
+  gap: t.$kk-space-xs;
+  margin-top: t.$kk-space-xs;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: t.$kk-space-xl t.$kk-space-side 24px;
+}
+
+.apiStatus {
+  margin: 0 0 t.$kk-space-m 0;
+  color: t.$kk-muted;
+  font-size: 14px;
+}
+
+.card {
+  margin-top: t.$kk-space-l;
+  padding: t.$kk-space-s;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  background: t.$kk-surface;
+}
+
+.row {
+  margin-top: t.$kk-space-m;
+  display: flex;
+  gap: t.$kk-space-s;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btnPrimary,
+.btnSecondary,
+.btn,
+.btnLink {
+  height: 38px;
+  padding: 0 t.$kk-space-m;
+  border-radius: t.$kk-radius;
+  border: 1px solid t.$kk-border;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: t.$kk-surface;
+  color: t.$kk-text;
+  font-weight: 700;
+}
+
+.btn,
+.btnLink,
+.btnSecondary {
+  border-color: t.$kk-brand;
+  background: t.$kk-surface;
+  color: t.$kk-text;
+}
+.btn:hover,
+.btnLink:hover,
+.btnSecondary:hover {
+  background: t.$kk-surface-tint;
+}
+
+.btnPrimary {
+  border-color: t.$kk-brand;
+  background: t.$kk-brand;
+  color: #fff;
+}
+.btnPrimary:hover {
+  background: t.$kk-brand-hover;
+  border-color: t.$kk-brand-hover;
+}
+
+.btnPrimary:disabled,
+.btnSecondary:disabled,
+.btn:disabled,
+.btnLink:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.muted {
+  color: t.$kk-muted;
+  margin: 0 0 t.$kk-space-xs 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.message {
+  margin-top: t.$kk-space-m;
+}
+
+.error {
+  color: t.$kk-brand;
+  font-weight: 700;
+}
+
+.toolList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.toolList li {
+  padding: t.$kk-space-xs 0;
+  border-bottom: 1px dotted t.$kk-border;
+}
+.toolList li:last-child {
+  border-bottom: 0;
+}
+
+.tableFrame {
+  margin-top: t.$kk-space-m;
+  overflow-x: auto;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  background: t.$kk-surface;
+}
+
+.tableFrame table {
+  width: 100%;
+}
+
+.paginationRow {
+  margin-top: t.$kk-space-m;
+  display: flex;
+  gap: t.$kk-space-s;
+  flex-wrap: wrap;
+}
+
+.mobileUserInfo {
+  font-size: 14px;
+  color: t.$kk-muted;
+  margin: t.$kk-space-m 0 0 0;
+}
+
+@media (max-width: 720px) {
+  .desktopNav {
+    display: none;
+  }
+
+  .userInfo {
+    display: none;
+  }
+
+  .hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+

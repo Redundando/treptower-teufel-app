@@ -1,0 +1,18 @@
+---
+description: Frontend standards for Svelte + reusable UI + scoped SCSS
+globs: web/src/**/*.svelte
+alwaysApply: false
+---
+
+## Component design (Svelte)
+- Prefer reusable components for UI.
+- Components should be dumb by default: render/compose UI and delegate state + side effects to stores/services.
+- Keep each component focused on one responsibility (one thing it “knows” / “does”).
+
+## Styling (SCSS modules)
+- Use SCSS modules when Sass is enabled.
+- Target structure: component-scoped SCSS (module-scoped styles) and avoid global selectors.
+- Avoid growing components just to fit styling—extract reusable subcomponents and/or shared style tokens.
+
+## “When in doubt”
+- Ask me before changing global layout, routing, or auth/db behavior.

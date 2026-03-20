@@ -1,0 +1,11 @@
+[jwt]
+algorithm = "HS256"
+access_token_seconds = 86400
+token_type = "Bearer"
+secret_key = ""
+
+[database]
+# Defaults are optional; environment variables override.
+# Keep this empty for local dev if you only use DATABASE_URL from `.env`.
+url = ""
+

@@ -33,6 +33,9 @@ if [ ! -x .venv/bin/python ]; then
 fi
 .venv/bin/python -m pip install -e . -q
 
+echo "=== Running DB migrations (staging) ==="
+.venv/bin/python -m app.db.migrate
+
 restart_api_only() {
   if [ -f /etc/systemd/system/tttc-api-staging.service ]; then
     echo "Restarting staging API (systemd)..."

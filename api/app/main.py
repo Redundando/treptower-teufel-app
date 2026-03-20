@@ -1,10 +1,11 @@
 """TTTC API — FastAPI application."""
-import os
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.config import DATABASE_URL
+from app.config import CONFIG
+from app.auth.router import router as auth_router
+from app.members.router import router as members_router
 
 app = FastAPI(
     title="TTTC API",
@@ -22,14 +23,15 @@ def health():
 @app.get("/db")
 async def db_check():
     """Check database connectivity. Returns 503 if DATABASE_URL missing or connection fails."""
-    if not DATABASE_URL or not DATABASE_URL.strip():
+    database_url = CONFIG["app"]["database"]["url"]
+    if not database_url or not database_url.strip():
         return JSONResponse(
             status_code=503,
             content={"status": "error", "detail": "DATABASE_URL not set"},
         )
     try:
         import asyncpg
-        conn = await asyncpg.connect(DATABASE_URL)
+        conn = await asyncpg.connect(database_url)
         try:
             row = await conn.fetchrow("SELECT 1 AS n")
             return {"status": "ok", "db": "connected", "check": row["n"]}
@@ -40,3 +42,7 @@ async def db_check():
             status_code=503,
             content={"status": "error", "detail": str(e)},
         )
+
+
+app.include_router(auth_router)
+app.include_router(members_router)

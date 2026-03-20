@@ -1,0 +1,5 @@
+members_csv_url = "https://store.netxp-verein.de/Netxp_Elemente/Adressbuch/AlleMitglieder.csv"
+club_id = 7418
+username = "Arved"
+timeout_seconds_default = 60
+

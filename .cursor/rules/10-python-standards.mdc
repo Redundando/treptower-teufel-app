@@ -1,0 +1,28 @@
+---
+description: Python standards: types, privacy, and config via TOML
+globs: api/**/*.py
+alwaysApply: false
+---
+
+## Python: type discipline
+- Always add type hints for every new/modified function/method: parameters and return types.
+- Prefer `TypedDict` over `dict` when the shape is known (especially for return values and function inputs).
+- When using `dict` for internal work, keep it narrow and convert to typed shapes at boundaries.
+
+## Python: structure + reuse
+- Prefer classes/objects when behavior groups naturally around state or a “service”.
+- Reuse existing code; don’t “re-invent the wheel”.
+- If reuse is blocked because the existing code is not structured for it: discuss with me and only refactor with explicit approval.
+
+## Python: constants + TOML
+- Avoid magic constants in code.
+- If a literal (number or string) would make you go “why exactly that?”, move it to TOML:
+  - app-wide defaults in `api/app/config/app.toml`
+  - feature defaults in `api/app/config/features/<feature>.toml`
+- Code should read those values from `app.config` (or feature-config entries exposed there), not hardcode them.
+
+## Python: strict privacy / public API
+- Private helpers must use a leading underscore (`_helper()`), and should be called only within the module that defines them.
+- Only public functions (no leading underscore) may be called from other modules.
+- When a helper must be reused across modules, make it public (or add a small public wrapper) and update the module’s public surface.
+

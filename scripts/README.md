@@ -83,3 +83,31 @@ chmod +x scripts/commit-and-push.sh   # once
 ```
 
 If there’s nothing to commit, the script exits without error.
+
+---
+
+## seed-admin
+
+Seeds the initial admin user (one-time), using the auth CLI module and `api/.venv`.
+
+**PowerShell (Windows):**
+```powershell
+.\scripts\seed-admin.ps1 -email admin@yourdomain.tld -password 'your-plaintext-password'
+```
+
+---
+
+## dev-start-all
+
+Start the API and the frontend together for local development (start-only; no migrations/seed).
+
+**PowerShell (Windows):**
+```powershell
+.\scripts\dev-start-all.ps1
+```
+
+If port `8000` is already in use:
+```powershell
+.\scripts\dev-start-all.ps1 -ApiPort 8001
+```
+

@@ -1,0 +1,28 @@
+// Design tokens translated from `docs/design-guidelines.md`.
+// This file exports SCSS variables only (no selectors).
+
+// Colors
+$kk-surface: #ffffff;
+$kk-surface-tint: #f3f3f3;
+$kk-text: #0e0e0e;
+$kk-muted: #888888;
+$kk-border: #bebebe;
+
+$kk-brand: #b51a2c;
+$kk-brand-hover: #d83a4d;
+$kk-focus: #f88492;
+
+$kk-success-bg: #f1fefe;
+$kk-success-border: #2d6126;
+
+// Radius
+$kk-radius: 3px;
+
+// Spacing rhythm
+$kk-space-xs: 4px;
+$kk-space-s: 8px;
+$kk-space-m: 14px;
+$kk-space-l: 18px;
+$kk-space-xl: 24px; // major sections (guidelines allow 24-28)
+$kk-space-side: 18px;
+

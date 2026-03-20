@@ -38,6 +38,9 @@ if [ ! -x .venv/bin/python ]; then
 fi
 .venv/bin/python -m pip install -e . -q
 
+echo "=== Running DB migrations (prod) ==="
+.venv/bin/python -m app.db.migrate
+
 if [ ! -f /etc/systemd/system/tttc-api-prod.service ]; then
   echo "Install tttc-api-prod.service (ops/systemd/) first."
   exit 1

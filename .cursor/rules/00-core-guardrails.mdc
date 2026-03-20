@@ -1,0 +1,15 @@
+---
+description: Incremental, compartmentalized changes (ask first when unsure)
+alwaysApply: true
+---
+
+## Default behavior
+- Prefer small, scoped edits over sweeping changes.
+- Avoid refactors by default; only refactor when it clearly enables reuse or fixes a real design issue.
+- When an edit spans multiple files or changes architecture/file layout: propose the plan and files first, then wait for your go-ahead.
+- Reuse existing code whenever possible; if reuse requires modifying/refactoring existing code: ask me.
+- Keep diffs tidy: no dead code, no unused imports, avoid formatting churn.
+
+## Guardrails
+- Never touch anything inside `.venv/`.
+- When running/testing Python code, activate `.venv` first (so dependencies like `python-dotenv` are available).
