@@ -29,3 +29,7 @@ node_modules/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Local-only artifacts (do not deploy / do not commit)
+logs/
+api/.ai-docs/
