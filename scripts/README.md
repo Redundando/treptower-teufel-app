@@ -59,11 +59,14 @@ Server runs **`scripts/deploy-remote-staging.sh`** (staging repo under `/srv/ttt
 
 **Semver tag + push** → GitHub deploys **prod** (`/srv/tttc/prod`). Only after prod server is provisioned.
 
+Runs **`git fetch origin`** first so the next patch is based on remote tags (use **`-SkipFetch`** to skip). With **no version argument**, the script tags the next **patch** after the highest `v*.*.*` tag (or **`v0.1.0`** if none exist).
+
 ```powershell
+.\scripts\release-prod.ps1
 .\scripts\release-prod.ps1 0.1.0
 ```
 
-**Bash:** `./scripts/release-prod.sh 0.1.0`
+**Bash:** `./scripts/release-prod.sh` · `./scripts/release-prod.sh 0.1.0` · `SKIP_FETCH=1 ./scripts/release-prod.sh`
 
 ---
 

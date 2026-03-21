@@ -52,7 +52,7 @@ We do **not** commit secrets; we do **not** manually edit code on the server. We
 |------|--------|
 | **Staging (SSH from your PC)** | `.\scripts\deploy-staging.ps1` → runs `scripts/deploy-remote-staging.sh` on the server |
 | **Staging (GitHub)** | Workflow **Deploy staging** (manual dispatch); secrets: [github-actions.md](./github-actions.md) |
-| **Production** | Push semver tag → workflow **Deploy production**; local helper `.\scripts\release-prod.ps1 0.1.0` |
+| **Production** | Push semver tag → workflow **Deploy production**; local helper `.\scripts\release-prod.ps1` (auto patch) or `.\scripts\release-prod.ps1 0.1.0` |
 
 Remote scripts: **`scripts/deploy-remote-staging.sh`**, **`scripts/deploy-remote-prod.sh`**. Paths: [server-layout.md](./server-layout.md).
 

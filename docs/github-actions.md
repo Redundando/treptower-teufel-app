@@ -31,7 +31,7 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 |------|---------|
 | Push + SSH staging (no GitHub) | `.\scripts\deploy-staging.ps1` |
 | Push + trigger staging workflow | `.\scripts\deploy-staging.ps1 -UseGitHub` (needs **`gh`** CLI logged in) |
-| Release prod | `.\scripts\release-prod.ps1 0.1.0` (tags + pushes → prod deploy) |
+| Release prod | `.\scripts\release-prod.ps1` (fetch + next patch tag) or `.\scripts\release-prod.ps1 0.1.0` (explicit); pushes tag → prod deploy |
 
 **Before** manual staging workflow: **`git push origin main`** so the server pulls the commit you want.
 
