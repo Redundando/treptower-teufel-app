@@ -1,0 +1,79 @@
+.chartsSection {
+  margin-bottom: 1.5rem;
+}
+
+.chartsHeading {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.tabRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fff;
+  color: inherit;
+}
+
+.tab[aria-selected='true'] {
+  border-color: #b51a2c;
+  background: rgba(181, 26, 44, 0.08);
+  font-weight: 600;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #f88492;
+  outline-offset: 2px;
+}
+
+.chartHost {
+  width: 100%;
+  height: 320px;
+  margin-bottom: 1.25rem;
+}
+
+.pieRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .pieRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pieBlock {
+  min-width: 0;
+}
+
+.pieCaption {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.pieHost {
+  width: 100%;
+  height: 280px;
+}
+
+@media (max-width: 720px) {
+  .pieHost {
+    height: 300px;
+  }
+}

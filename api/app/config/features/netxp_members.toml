@@ -1,0 +1,17 @@
+# Admin list/export API for `netxp_members` (not the CSV sync job; see netxp_sync_members.toml).
+
+list_default_page_size = 50
+list_max_page_size = 1000
+
+export_row_limit = 100_000
+
+# Youth filter: "at most N years old on Jan 1" uses SQL interval (N + 1) years from birth date.
+youth_age_threshold_years = 18
+
+# Stored normalized in DB queries (LOWER(TRIM(csv_status))).
+csv_status_aktiv_value = "aktiv"
+csv_status_passiv_value = "passiv"
+
+xlsx_sheet_title = "members"
+export_csv_filename = "netxp-members.csv"
+export_xlsx_filename = "netxp-members.xlsx"

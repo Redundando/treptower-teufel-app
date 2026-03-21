@@ -92,10 +92,195 @@
   gap: t.$kk-space-s;
 }
 
-.userInfo {
+// Custom language menu (replaces native <select> — avoids OS blue highlight / odd list chrome)
+.localeDropdown {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 12;
+}
+
+.localeMenuButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  appearance: none;
+  font: inherit;
   font-size: 14px;
+  line-height: 1.2;
+  padding: 6px 10px;
+  border-radius: t.$kk-radius;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
+  cursor: pointer;
+  min-width: 7.5rem;
+  max-width: 11rem;
+  justify-content: space-between;
+  text-align: left;
+}
+.localeMenuButton:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.localeMenuButton:focus-visible {
+  outline: 2px solid t.$kk-focus;
+  outline-offset: 2px;
+}
+
+.localeMenuButtonLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.localeChevron {
+  flex-shrink: 0;
+  opacity: 0.95;
+  transition: transform 0.15s ease;
+}
+.localeMenuButton[aria-expanded='true'] .localeChevron {
+  transform: rotate(180deg);
+}
+
+.mobileLocaleToggle[aria-expanded='true'] .localeChevron {
+  transform: rotate(180deg);
+}
+
+.localeDropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  min-width: 100%;
+  width: max-content;
+  max-width: 220px;
+  background: t.$kk-surface;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  padding: t.$kk-space-xs 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.localeMenuOption {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  padding: t.$kk-space-s t.$kk-space-m;
+  color: t.$kk-text;
+}
+.localeMenuOption:hover {
+  background: t.$kk-surface-tint;
+}
+.localeMenuOptionSelected {
+  font-weight: 600;
+  color: t.$kk-brand;
+  background: rgba(181, 26, 44, 0.06);
+}
+.localeMenuOptionSelected:hover {
+  background: rgba(181, 26, 44, 0.1);
+}
+
+.mobileLocaleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: t.$kk-space-xs;
+  padding-bottom: t.$kk-space-s;
+  margin-bottom: t.$kk-space-xs;
+  border-bottom: 1px solid t.$kk-border;
+}
+
+.mobileLocaleToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$kk-space-s;
+  width: 100%;
+  appearance: none;
+  font: inherit;
+  font-size: 14px;
+  padding: t.$kk-space-s t.$kk-space-m;
+  border-radius: t.$kk-radius;
+  border: 1px solid t.$kk-border;
+  background: t.$kk-surface-tint;
+  color: t.$kk-brand;
+  cursor: pointer;
+  text-align: left;
+}
+.mobileLocaleToggle:hover {
+  background: #ebebeb;
+}
+
+.mobileLocaleMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px 2px;
+}
+
+.mobileLocaleOption {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: t.$kk-radius;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  padding: t.$kk-space-s t.$kk-space-m;
+  color: t.$kk-brand;
+}
+.mobileLocaleOption:hover {
+  background: t.$kk-surface-tint;
+}
+.mobileLocaleOptionSelected {
+  font-weight: 600;
+  background: rgba(181, 26, 44, 0.06);
+}
+
+.userInfo {
+  font-size: 13px;
+  line-height: 1.2;
+  color: #fff;
+  max-width: 11rem;
+  min-width: 0;
+}
+
+.userInfoVisual {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.userInfoEmail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.userInfoSep {
+  flex-shrink: 0;
+  opacity: 0.65;
+  font-weight: 400;
+}
+
+.userInfoRole {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .logoutBtn {
@@ -190,12 +375,6 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: t.$kk-space-xl t.$kk-space-side 24px;
-}
-
-.apiStatus {
-  margin: 0 0 t.$kk-space-m 0;
-  color: t.$kk-muted;
-  font-size: 14px;
 }
 
 .card {
@@ -318,6 +497,23 @@
   font-size: 14px;
   color: t.$kk-muted;
   margin: t.$kk-space-m 0 0 0;
+}
+
+.mobileUserInfoVisual {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.mobileUserInfo .userInfoEmail {
+  color: t.$kk-text;
+}
+
+.mobileUserInfo .userInfoRole {
+  color: t.$kk-brand;
+  background: rgba(181, 26, 44, 0.1);
 }
 
 @media (max-width: 720px) {

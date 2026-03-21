@@ -1,0 +1,42 @@
+.error {
+  color: var(--color-danger, #b00020);
+}
+
+.footnote {
+  margin-bottom: 1rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+
+.numHead,
+.numCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.subtotalRow th,
+.subtotalRow td {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.totalRow th,
+.totalRow td {
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.06);
+}

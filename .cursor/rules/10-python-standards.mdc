@@ -4,6 +4,9 @@ globs: api/**/*.py
 alwaysApply: false
 ---
 
+## Python: environment
+- Use the project venv at **`api/.venv/`** for every Python run (see **Python virtualenv** in `00-core-guardrails.mdc`): `api/.venv/bin/python` or `api\.venv\Scripts\python.exe`.
+
 ## Python: type discipline
 - Always add type hints for every new/modified function/method: parameters and return types.
 - Prefer `TypedDict` over `dict` when the shape is known (especially for return values and function inputs).

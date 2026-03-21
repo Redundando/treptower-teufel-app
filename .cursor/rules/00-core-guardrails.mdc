@@ -11,5 +11,18 @@ alwaysApply: true
 - Keep diffs tidy: no dead code, no unused imports, avoid formatting churn.
 
 ## Guardrails
-- Never touch anything inside `.venv/`.
-- When running/testing Python code, activate `.venv` first (so dependencies like `python-dotenv` are available).
+
+### Python virtualenv (always use for Python)
+- **Location:** `api/.venv/` — the venv is **not** at the repository root; it lives next to `api/pyproject.toml`.
+- **Always** run project Python with this interpreter (tests, scripts, `pip`, `uvicorn`, `-m app…`). Do **not** use system/global `python` or `py` for repo commands unless the venv is already activated in that shell.
+- **Windows (PowerShell):** prefer  
+  `api\.venv\Scripts\python.exe …`  
+  or `cd api` then `.\.venv\Scripts\Activate.ps1` and then `python …`.
+- **macOS / Linux:** prefer  
+  `api/.venv/bin/python …`  
+  or `cd api` then `source .venv/bin/activate` and then `python …`.
+- **Working directory:** many commands expect `api/` as cwd (e.g. `python -m uvicorn app.main:app`, `python -m app.netxp_members`).
+- Never edit or commit anything under `api/.venv/`.
+
+### Web UI (i18n)
+- User-visible copy in the **web** app uses **Paraglide** (message files + generated `m.*` helpers). Do not add raw UI strings without updating `web/messages/en.json` and `de.json`. See `.cursor/rules/21-web-i18n-paraglide.mdc` when editing `web/src/**/*.svelte` or related TS.

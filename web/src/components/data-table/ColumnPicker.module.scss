@@ -1,0 +1,43 @@
+@use '../../styles/expandablePanel' as ep;
+
+.columnPanel {
+  @include ep.expandable-panel-shell;
+}
+
+.columnSummary {
+  @include ep.expandable-summary-row(false);
+  @include ep.expandable-summary-markers-hidden;
+  @include ep.expandable-summary-chevron-pseudo;
+}
+
+@include ep.expandable-open-chevron('.columnPanel', '.columnSummary');
+
+.columnPanelBody {
+  @include ep.expandable-panel-body;
+}
+
+.columnHint {
+  margin: 0.55rem 0 0.45rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.columnActions {
+  margin: 0 0 0.5rem;
+}
+
+.columnGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.35rem 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.columnGrid label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: normal;
+  cursor: pointer;
+}

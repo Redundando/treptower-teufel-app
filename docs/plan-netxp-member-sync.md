@@ -191,12 +191,12 @@ Add a module entrypoint inside `api/` so it can be executed on dev/staging/prod:
 Example commands (exact naming TBD during implementation):
 
 - Windows (PowerShell, from repo root):
-  - `.\api\.venv\Scripts\python.exe -m app.netxp_sync_members` (default: write mode)
-  - `.\api\.venv\Scripts\python.exe -m app.netxp_sync_members --dry-run`
-  - `.\api\.venv\Scripts\python.exe -m app.netxp_sync_members --limit 50` (optional for testing)
+  - `.\api\.venv\Scripts\python.exe -m app.netxp_members` (default: write mode; sync lives in `app.netxp_members.sync`)
+  - `.\api\.venv\Scripts\python.exe -m app.netxp_members --dry-run`
+  - `.\api\.venv\Scripts\python.exe -m app.netxp_members --limit 50` (optional for testing)
 - Linux (server, from `/srv/tttc/staging/api` or `/srv/tttc/prod/api`):
-  - `.venv/bin/python -m app.netxp_sync_members`
-  - `.venv/bin/python -m app.netxp_sync_members --dry-run`
+  - `.venv/bin/python -m app.netxp_members`
+  - `.venv/bin/python -m app.netxp_members --dry-run`
 
 Exit codes:
 
@@ -222,9 +222,9 @@ Required env vars:
 Commands:
 
 - Dry-run:
-  - `.venv/bin/python -m app.netxp_sync_members --dry-run`
+  - `.venv/bin/python -m app.netxp_members --dry-run`
 - Write mode:
-  - `.venv/bin/python -m app.netxp_sync_members`
+  - `.venv/bin/python -m app.netxp_members`
 
 Notes:
 

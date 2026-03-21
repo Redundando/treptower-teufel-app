@@ -40,6 +40,7 @@ TYPED_FIELDS_BY_HEADER: dict[str, str] = {
     "NxSspRegistrationCode": "nx_ssp_registration_code",
     "Beitragsnamen": "beitragsnamen",
     "Info": "info",
+    "Status": "csv_status",
 }
 
 
@@ -66,7 +67,10 @@ def parse_date(value: str | None) -> date | None:
     if not value:
         return None
 
-    m = DATE_GERMAN_RE.match(value)
+    # NetXP CSV often exports like "21.06.1997 00:00:00" (date + time).
+    date_token = value.split(None, 1)[0]
+
+    m = DATE_GERMAN_RE.match(date_token)
     if m:
         dd = int(m.group("dd"))
         mm = int(m.group("mm"))
@@ -76,9 +80,25 @@ def parse_date(value: str | None) -> date | None:
         except ValueError:
             return None
 
-    # Fallback: try ISO format
+    # ISO date, optionally with time (fromisoformat accepts extended forms in 3.11+)
     try:
         return date.fromisoformat(value)
+    except ValueError:
+        pass
+    try:
+        return date.fromisoformat(date_token)
+    except ValueError:
+        return None
+
+
+def parse_optional_int(value: str | None) -> int | None:
+    if not value:
+        return None
+    s = value.strip()
+    if not s:
+        return None
+    try:
+        return int(s)
     except ValueError:
         return None
 
@@ -244,6 +264,7 @@ MEMBERS_COLUMNS: list[str] = [
     "nx_ssp_registration_code",
     "beitragsnamen",
     "info",
+    "csv_status",
 ]
 
 
@@ -343,6 +364,23 @@ def build_members_upsert_query(members_columns: list[str]) -> str:
     """
 
 
+def _typed_column_value_for_db(column: str, value: Any) -> Any:
+    """mitgliedsnummer is BIGINT; asyncpg requires Python int, never str."""
+    if column != "mitgliedsnummer":
+        return value
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    s = str(value).strip()
+    if not s:
+        return None
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
 def build_members_upsert_values(
     *,
     parsed_rows: list[ParsedNetxpRow],
@@ -350,13 +388,15 @@ def build_members_upsert_values(
 ) -> list[tuple[Any, ...]]:
     values: list[tuple[Any, ...]] = []
     for pr in parsed_rows:
-        typed_values = [pr.typed.get(col) for col in members_columns]
-        # asyncpg may not auto-encode dict -> jsonb, so pass a JSON string.
+        typed_values = [
+            _typed_column_value_for_db(col, pr.typed.get(col)) for col in members_columns
+        ]
+        # Pass a dict; asyncpg encodes it to JSONB. (A JSON *string* param was stored/read oddly for some clients.)
         values.append(
             (
                 pr.netxp_id,
                 *typed_values,
-                json.dumps(pr.raw, ensure_ascii=False),
+                pr.raw,
                 pr.raw_hash,
             )
         )
@@ -504,7 +544,8 @@ def _parse_csv_sync(
     with open(csv_path, "r", encoding=encoding_to_use, newline="") as f_text:
         reader = csv.reader(f_text, delimiter=";")
         headers_raw = next(reader)  # can raise if empty file
-        headers = [h.strip() for h in headers_raw]
+        # Strip BOM / whitespace so "Mitgliedsnummer" matches TYPED_FIELDS_BY_HEADER (BIGINT bind needs int).
+        headers = [h.strip().lstrip("\ufeff") for h in headers_raw]
         header_to_index = {h: i for i, h in enumerate(headers)}
 
         if "ID" not in header_to_index:
@@ -535,10 +576,22 @@ def _parse_csv_sync(
                 if csv_header not in raw:
                     continue
                 typed_val = raw.get(csv_header)
-                if csv_header in {"Geburtsdatum", "Eintrittsdatum", "Austrittsdatum"}:
+                if csv_header == "Mitgliedsnummer":
+                    typed[typed_col] = parse_optional_int(typed_val)
+                elif csv_header in {"Geburtsdatum", "Eintrittsdatum", "Austrittsdatum"}:
                     typed[typed_col] = parse_date(typed_val)
                 else:
                     typed[typed_col] = typed_val or None
+
+            # NetXP may emit the column with different casing; mirror into typed csv_status.
+            if not typed.get("csv_status"):
+                for alt in ("Status", "STATUS", "status"):
+                    if alt not in raw:
+                        continue
+                    v = (raw.get(alt) or "").strip()
+                    if v:
+                        typed["csv_status"] = v
+                        break
 
             # Hash the entire raw row so diffs are stable across runs.
             raw_hash = hashlib.sha256(

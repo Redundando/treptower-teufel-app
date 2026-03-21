@@ -1,0 +1,16 @@
+@use '../../styles/tokens.scss' as t;
+
+.pageSizeField {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.pageSizeSelect {
+  min-width: 4.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: t.$kk-radius;
+  border: 1px solid t.$kk-border;
+  background: t.$kk-surface;
+}

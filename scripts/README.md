@@ -101,6 +101,8 @@ Seeds the initial admin user (one-time), using the auth CLI module and `api/.ven
 
 Start the API and the frontend together for local development (start-only; no migrations/seed).
 
+The script stops anything listening on the API/Web ports, then stops **Python processes running uvicorn** for `app.main:app` (the `--reload` parent can survive a port-only kill and keep serving stale code). You should not need to `Stop-Process` all `python.exe` manually.
+
 **PowerShell (Windows):**
 ```powershell
 .\scripts\dev-start-all.ps1

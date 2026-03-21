@@ -1,0 +1,53 @@
+@use 'sass:color';
+@use '../../styles/tokens.scss' as t;
+
+.sortHeader {
+  /* Fill the <th> so clicks on padding / empty column width still sort (last column was easy to miss). */
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.sortHeader:hover,
+.sortHeader:focus-visible {
+  text-decoration: underline;
+}
+
+.sortCaret {
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.dataRow {
+  cursor: pointer;
+}
+
+.dataRow:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.rowSelected {
+  background: color.change(t.$kk-brand, $alpha: 0.1);
+}
+
+.dataRow:focus-visible {
+  outline: 2px solid t.$kk-focus;
+  outline-offset: -2px;
+}
+
+.thPlain {
+  font-weight: 600;
+  text-align: left;
+}

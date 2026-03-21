@@ -1,0 +1,68 @@
+// Shared `<details>` expandable “card” pattern (admin filters, column picker, etc.).
+@use './tokens.scss' as t;
+
+@mixin expandable-panel-shell {
+  margin: 0.75rem 0 0;
+  border: 1px solid t.$kk-border;
+  border-radius: t.$kk-radius;
+  background: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+
+@mixin expandable-summary-markers-hidden {
+  &::-webkit-details-marker {
+    display: none;
+  }
+  &::marker {
+    content: '';
+  }
+}
+
+@mixin expandable-summary-chevron-pseudo {
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-right: 2px solid rgba(0, 0, 0, 0.45);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.45);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+    margin-right: 0.15rem;
+    flex-shrink: 0;
+  }
+}
+
+/// Summary row for `<details>`: flex label + chevron. Pass `$wrap: true` for multi-line summaries (e.g. badges).
+@mixin expandable-summary-row($wrap: false) {
+  list-style: none;
+  cursor: pointer;
+  padding: t.$kk-space-s 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.75);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  @if $wrap {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  } @else {
+    gap: 0.35rem;
+  }
+}
+
+@mixin expandable-panel-body {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/// Rotate chevron when open. Pass panel class (e.g. `.filterPanel`) and one or more summary selectors.
+@mixin expandable-open-chevron($panel-selector, $summary-selectors...) {
+  @each $sel in $summary-selectors {
+    #{$panel-selector}[open] #{$sel}::before {
+      transform: rotate(45deg);
+      margin-top: 0.1rem;
+    }
+  }
+}

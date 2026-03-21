@@ -1,7 +1,9 @@
 <script lang="ts">
   import { Link } from 'svelte-navigator'
-  import { apiStatus, login, logout, me } from '../stores/auth'
+  import { login, logout, me } from '../stores/auth'
   import commonStyles from '../styles/common.module.scss'
+  import * as m from '../paraglide/messages.js'
+  import { translateClientErrorMessage } from '../lib/apiErrorMessage'
 
   // Login form state
   let loginEmail = $state('')
@@ -17,7 +19,7 @@
       await login(loginEmail, loginPassword)
       // Redirect is handled centrally by App via `redirectToIndex`.
     } catch (e) {
-      loginError = e instanceof Error ? e.message : 'Network error'
+      loginError = translateClientErrorMessage(e instanceof Error ? e.message : m.api_err_network())
     } finally {
       loading = false
     }
@@ -26,36 +28,36 @@
 
 {#if $me}
   <section class={commonStyles.card}>
-    <h2>Already signed in</h2>
+    <h2>{m.login_already_signed_in_title()}</h2>
     <p class={commonStyles.muted}>
-      You are logged in as <b>{$me.email}</b> (<b>{$me.role}</b>).
+      {m.login_already_signed_in_body({ email: $me.email, role: $me.role })}
     </p>
     <div class={commonStyles.row}>
-      <button class={commonStyles.btnSecondary} onclick={logout}>Logout</button>
-      <Link class={commonStyles.btnSecondary} to="/">Back to Index</Link>
+      <button class={commonStyles.btnSecondary} onclick={logout}>{m.layout_logout()}</button>
+      <Link class={commonStyles.btnSecondary} to="/">{m.common_back_to_index()}</Link>
     </div>
   </section>
 {:else}
   <section class={commonStyles.card}>
-    <h2>Login</h2>
+    <h2>{m.login_title()}</h2>
 
     <label>
-      Email
+      {m.login_email()}
       <input bind:value={loginEmail} type="email" autocomplete="email" />
     </label>
 
     <label>
-      Password
+      {m.login_password()}
       <input bind:value={loginPassword} type="password" autocomplete="current-password" />
     </label>
 
     <div class={commonStyles.row}>
       <button
         class={commonStyles.btnPrimary}
-        disabled={loading || $apiStatus.includes('offline')}
+        disabled={loading}
         onclick={doLogin}
       >
-        Sign in
+        {m.login_sign_in()}
       </button>
     </div>
 
@@ -64,4 +66,3 @@
     {/if}
   </section>
 {/if}
-

@@ -8,7 +8,8 @@ from streamator.fastapi import make_job_stream_response
 
 from app.config import CONFIG
 from app.auth.router import router as auth_router
-from app.members.router import router as members_router
+from app.netxp_members.router import router as netxp_members_router
+from app.netxp_members.public_stats import router as netxp_public_stats_router
 from app.auth.deps import AuthenticatedUser, require_admin
 
 app = FastAPI(
@@ -49,7 +50,8 @@ async def db_check():
 
 
 app.include_router(auth_router)
-app.include_router(members_router)
+app.include_router(netxp_members_router)
+app.include_router(netxp_public_stats_router)
 
 
 @app.get("/job/{job_id}/stream")

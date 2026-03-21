@@ -1,0 +1,28 @@
+---
+description: Paraglide i18n — all user-visible web copy goes through message catalogs
+globs: web/src/**/*.{svelte,ts}
+alwaysApply: false
+---
+
+## Stack
+- **Paraglide** (`@inlang/paraglide-js`): compile-time messages, generated under [`web/src/paraglide/`](web/src/paraglide/).
+- **Catalogs:** add keys to [`web/messages/en.json`](web/messages/en.json) and [`web/messages/de.json`](web/messages/de.json) — same keys in both; German is the second locale.
+- **Vite:** [`web/vite.config.ts`](web/vite.config.ts) runs `paraglideVitePlugin` (cookie `tttc_locale`, strategies include cookie + `preferredLanguage`). Do not add a second i18n library or ad-hoc locale stores for UI copy.
+
+## When adding or changing UI text (Svelte / TS in `web/src/`)
+1. **Do not** leave new user-facing strings as raw literals in components (labels, buttons, empty states, errors shown to users, `aria-label` / `placeholder` when they are full phrases).
+2. **Do** add message entries to `en.json` and `de.json`, then use generated helpers from Paraglide:
+   - `import * as m from '<relative>/paraglide/messages.js'`
+   - Call `m.your_key()` (and pass parameters for messages with `{placeholders}` per existing patterns).
+3. After adding keys, ensure the project compiles (e.g. `npm run build` in `web/`) so `src/paraglide` stays in sync if your workflow commits generated output.
+4. **Exceptions** (literals are OK): proper names, emails, IDs, URLs, numeric values, short technical tokens (`netxp_raw`, CSV headers if required to match backend), and dev-only debug text not shown to end users.
+
+## API / client errors
+- Prefer mapping stable server `detail` strings or known `Error.message` patterns for display — extend [`web/src/lib/apiErrorMessage.ts`](web/src/lib/apiErrorMessage.ts) and add matching message keys rather than surfacing raw English from the API in new screens.
+- Keep FastAPI `detail` strings stable when they are used as lookup keys; if you change server text, update the client map.
+
+## Locale / language switching
+- Locale is set via Paraglide **`setLocale`** (persists `tttc_locale` cookie). Reuse the header pattern in [`web/src/layout/Layout.svelte`](web/src/layout/Layout.svelte); do not introduce a parallel cookie name or a second source of truth for locale.
+
+## Naming
+- Use **snake_case** keys in JSON (e.g. `netxp_filter_search`, `admin_create_title`) to match existing catalogs.

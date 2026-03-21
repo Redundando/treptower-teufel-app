@@ -1,9 +1,16 @@
 #!/usr/bin/env pwsh
 #
 # Behavior:
-# 1) If anything is listening on the target ports, kill it.
+# 1) Kill listeners on API/Web ports, then stop leftover uvicorn Python processes for this app.
+#    (uvicorn --reload uses a parent watcher that may not own the listen port; killing only the
+#    port PID can leave a stale parent, so the next run binds oddly or serves old code until
+#    all python.exe uvicorn processes are cleared.)
 # 2) Start FastAPI + Vite.
 # 3) Print URLs and exit ("Done").
+#
+# API reload: uvicorn --reload watches only api/ (not the whole repo). That avoids Windows
+# watch noise from web/, logs/, etc. and makes Python/config edits reliably trigger a restart.
+# *.toml is included so app/config/*.toml changes reload the API too.
 #
 # Requirements:
 # - api/.venv exists
@@ -49,9 +56,32 @@ function Stop-ListenerOnPort([int] $port) {
   }
 }
 
+function Stop-ProjectUvicornProcesses {
+  # Match the venv/uvicorn invocation from this script (app.main:app + app-dir api).
+  Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+    Where-Object {
+      ($_.Name -eq 'python.exe' -or $_.Name -eq 'pythonw.exe') -and
+      $_.CommandLine -and
+      $_.CommandLine -match 'uvicorn' -and
+      $_.CommandLine -match 'app\.main:app'
+    } |
+    ForEach-Object {
+      try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch { }
+    }
+}
+
 Write-Host "Killing anything on ports: API=$ApiPort, Web=$WebPort"
 Stop-ListenerOnPort $ApiPort
 Stop-ListenerOnPort $WebPort
+Start-Sleep -Milliseconds 350
+
+Write-Host "Stopping any leftover uvicorn (Python) processes for this app ..."
+Stop-ProjectUvicornProcesses
+Start-Sleep -Milliseconds 200
+
+# Avoid stale Python bytecode (e.g. old Pydantic field types) after model edits.
+Get-ChildItem -Path $ApiDir -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue |
+  Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 $apiOutLog = Join-Path $RepoRoot "logs\dev-start-all-api.out.log"
 $apiErrLog = Join-Path $RepoRoot "logs\dev-start-all-api.err.log"
@@ -64,10 +94,25 @@ New-Item -ItemType Directory -Path (Join-Path $RepoRoot "logs") -Force | Out-Nul
 $stdinNullFile = Join-Path $RepoRoot "logs\dev-stdin-null.txt"
 "" | Out-File -FilePath $stdinNullFile -Encoding ascii -Force
 
+# Show resolved api path in the banner (reload uses relative "api" below).
+$ApiDirResolved = (Resolve-Path -LiteralPath $ApiDir).Path
+
 Write-Host "Starting API ..."
+Write-Host "  uvicorn reload watching: $ApiDirResolved (*.py + *.toml)"
+# Use a relative --reload-dir so argv has no spaces. Start-Process -ArgumentList on Windows
+# can break a single argument at spaces when building the child command line, which led to
+# uvicorn seeing --reload-dir C:\dev\treptower only. Cwd is $RepoRoot, so "api" == $ApiDirResolved.
 Start-Process -FilePath $VenvPython `
   -WorkingDirectory $RepoRoot `
-  -ArgumentList "-m", "uvicorn", "app.main:app", "--reload", "--app-dir", "api", "--port", $ApiPort `
+  -ArgumentList @(
+    "-m", "uvicorn", "app.main:app",
+    "--reload",
+    "--reload-dir", "api",
+    "--reload-include", "*.toml",
+    "--reload-delay", "0.25",
+    "--app-dir", "api",
+    "--port", "$ApiPort"
+  ) `
   -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -RedirectStandardInput $stdinNullFile -WindowStyle Hidden | Out-Null
 
 Write-Host "Starting frontend ..."

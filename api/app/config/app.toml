@@ -1,6 +1,7 @@
 [jwt]
 algorithm = "HS256"
-access_token_seconds = 86400
+# 30 days (match web cookie Max-Age in web/src/lib/authTokenCookie.ts)
+access_token_seconds = 2592000
 token_type = "Bearer"
 secret_key = ""
 

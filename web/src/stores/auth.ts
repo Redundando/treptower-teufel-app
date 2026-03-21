@@ -1,21 +1,34 @@
 import { get, writable } from 'svelte/store'
 import type { Me, Role } from '../types/auth'
-import { adminCreateUser as adminCreateUserApi, checkApi, fetchMe, login as loginApi } from '../api/client'
-import { fetchMembers, resetMembersState } from './members'
+import { admin_create_success } from '../paraglide/messages.js'
+import {
+  clearAuthTokenCookie,
+  readAuthTokenFromCookie,
+  writeAuthTokenToCookie
+} from '../lib/authTokenCookie'
+import { adminCreateUser as adminCreateUserApi, fetchMe, login as loginApi } from '../api/client'
+import { fetchNetxpMembers, resetNetxpMembersState } from './netxpMembers'
 
-const STORAGE_KEY = 'access_token'
+/** Legacy localStorage key — migrated to cookie on first load */
+const LEGACY_STORAGE_KEY = 'access_token'
 
 export const token = writable<string | null>(null)
 export const me = writable<Me | null>(null)
 export const authReady = writable(false)
-export const apiStatus = writable('API: …')
 
 // Incrementing this triggers redirect in the root App component.
 export const redirectToIndex = writable(0)
 
 function loadTokenFromStorage(): string | null {
+  const fromCookie = readAuthTokenFromCookie()
+  if (fromCookie) return fromCookie
+
   try {
-    return localStorage.getItem(STORAGE_KEY)
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (!legacy) return null
+    writeAuthTokenToCookie(legacy)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
+    return legacy
   } catch {
     return null
   }
@@ -23,8 +36,17 @@ function loadTokenFromStorage(): string | null {
 
 function saveTokenToStorage(v: string | null) {
   try {
-    if (!v) localStorage.removeItem(STORAGE_KEY)
-    else localStorage.setItem(STORAGE_KEY, v)
+    if (!v) {
+      clearAuthTokenCookie()
+      localStorage.removeItem(LEGACY_STORAGE_KEY)
+    } else {
+      writeAuthTokenToCookie(v)
+      try {
+        localStorage.removeItem(LEGACY_STORAGE_KEY)
+      } catch {
+        // ignore
+      }
+    }
   } catch {
     // ignore storage failures
   }
@@ -35,7 +57,7 @@ export function logout() {
   me.set(null)
   authReady.set(true)
 
-  resetMembersState()
+  resetNetxpMembersState()
 
   saveTokenToStorage(null)
 
@@ -48,8 +70,6 @@ export async function bootstrapAuth() {
   const t = loadTokenFromStorage()
   token.set(t)
 
-  apiStatus.set(await checkApi())
-
   if (!t) {
     authReady.set(true)
     return
@@ -60,8 +80,7 @@ export async function bootstrapAuth() {
     me.set(j)
 
     if (j.role === 'admin') {
-      // Preserve current behavior: preload members for admins on bootstrap.
-      await fetchMembers(t)
+      await fetchNetxpMembers(t)
     }
   } catch {
     // Invalid/expired token.
@@ -72,8 +91,6 @@ export async function bootstrapAuth() {
 }
 
 export async function login(email: string, password: string) {
-  apiStatus.set(get(apiStatus))
-
   const j = await loginApi(email, password)
 
   const t = j.access_token
@@ -85,8 +102,7 @@ export async function login(email: string, password: string) {
     me.set(meJson)
 
     if (meJson.role === 'admin') {
-      // Preserve current behavior: preload members for admins after login.
-      await fetchMembers(t)
+      await fetchNetxpMembers(t)
     }
   } catch {
     logout()
@@ -101,6 +117,6 @@ export async function adminCreateUser(payload: { email: string; password: string
   if (!t) throw new Error('Not authenticated')
 
   const j = await adminCreateUserApi(t, payload)
-  return `Created user ${j.email} (${j.role})`
+  return admin_create_success({ email: j.email, role: j.role })
 }
 

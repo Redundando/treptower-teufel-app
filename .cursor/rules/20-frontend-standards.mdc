@@ -14,5 +14,8 @@ alwaysApply: false
 - Target structure: component-scoped SCSS (module-scoped styles) and avoid global selectors.
 - Avoid growing components just to fit styling—extract reusable subcomponents and/or shared style tokens.
 
+## Internationalization (Paraglide)
+- All user-visible strings: **Paraglide** + `web/messages/en.json` & `de.json`. See `.cursor/rules/21-web-i18n-paraglide.mdc` for the full checklist.
+
 ## “When in doubt”
 - Ask me before changing global layout, routing, or auth/db behavior.

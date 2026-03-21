@@ -1,2 +1,0 @@
-# TTTC members API package
-

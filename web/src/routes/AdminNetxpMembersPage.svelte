@@ -1,39 +1,157 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { Link } from 'svelte-navigator'
-  import { authReady, me, token } from '../stores/auth'
-  import { syncNetxpMembers } from '../api/client'
+  import { authReady, me, token } from '../../stores/auth'
+  import { syncNetxpMembers } from '../../api/client'
   import {
-    fetchMembers,
-    membersActiveOnly,
-    membersError,
-    membersItems,
-    membersLoading,
-    membersPage,
-    membersPageSize,
-    membersSearch,
-    membersTotal
-  } from '../stores/members'
+    fetchNetxpMembers,
+    netxpMembersActiveOnly,
+    netxpMembersCurrentOnly,
+    netxpMembersError,
+    netxpMembersItems,
+    netxpMembersLoading,
+    netxpMembersPage,
+    netxpMembersPageSize,
+    netxpMembersSearch,
+    netxpMembersTotal
+  } from '../../stores/netxpMembers'
   import { get } from 'svelte/store'
-  import commonStyles from '../styles/common.module.scss'
+  import type { NetxpMember } from '../../types/netxpMember'
+  import commonStyles from '../../styles/common.module.scss'
+  import pageStyles from './AdminNetxpMembersPage.module.scss'
+
+  const COL_STORAGE_KEY = 'tttc-admin-netxp-member-cols-v1'
+
+  type ColId =
+    | 'id'
+    | 'netxp_id'
+    | 'active'
+    | 'first_seen_at'
+    | 'last_seen_at'
+    | 'inactive_since'
+    | 'mitgliedsnummer'
+    | 'vorname'
+    | 'nachname'
+    | 'geburtsdatum'
+    | 'eintrittsdatum'
+    | 'austrittsdatum'
+    | 'mitgliedsart'
+    | 'strasse'
+    | 'plz'
+    | 'ort'
+    | 'telefon_privat'
+    | 'telefon_arbeit'
+    | 'email_privat'
+    | 'nx_ssp_registration_code'
+    | 'beitragsnamen'
+    | 'info'
+
+  type ColDef = { id: ColId; label: string; defaultVisible: boolean }
+
+  /** Order = table column order. Only `defaultVisible` columns show until the user changes preferences. */
+  const COL_DEFS: ColDef[] = [
+    { id: 'id', label: 'Internal id', defaultVisible: false },
+    { id: 'netxp_id', label: 'NetXP id', defaultVisible: true },
+    { id: 'active', label: 'Active', defaultVisible: true },
+    { id: 'first_seen_at', label: 'First seen', defaultVisible: false },
+    { id: 'last_seen_at', label: 'Last seen', defaultVisible: false },
+    { id: 'inactive_since', label: 'Inactive since', defaultVisible: false },
+    { id: 'mitgliedsnummer', label: 'Mitgliedsnummer', defaultVisible: true },
+    { id: 'vorname', label: 'Vorname', defaultVisible: true },
+    { id: 'nachname', label: 'Nachname', defaultVisible: true },
+    { id: 'geburtsdatum', label: 'Geburtsdatum', defaultVisible: true },
+    { id: 'eintrittsdatum', label: 'Eintrittsdatum', defaultVisible: true },
+    { id: 'austrittsdatum', label: 'Austrittsdatum', defaultVisible: true },
+    { id: 'mitgliedsart', label: 'Mitgliedsart', defaultVisible: true },
+    { id: 'strasse', label: 'Straße', defaultVisible: true },
+    { id: 'plz', label: 'PLZ', defaultVisible: true },
+    { id: 'ort', label: 'Ort', defaultVisible: true },
+    { id: 'telefon_privat', label: 'Telefon (privat)', defaultVisible: true },
+    { id: 'telefon_arbeit', label: 'Telefon (Arbeit)', defaultVisible: true },
+    { id: 'email_privat', label: 'E-Mail', defaultVisible: true },
+    { id: 'nx_ssp_registration_code', label: 'SSP registration code', defaultVisible: false },
+    { id: 'beitragsnamen', label: 'Beitragsnamen', defaultVisible: true },
+    { id: 'info', label: 'Info', defaultVisible: false }
+  ]
+
+  function defaultVisibleColIds(): ColId[] {
+    return COL_DEFS.filter((c) => c.defaultVisible).map((c) => c.id)
+  }
+
+  function loadColumnPrefs(): ColId[] {
+    if (typeof localStorage === 'undefined') return defaultVisibleColIds()
+    try {
+      const raw = localStorage.getItem(COL_STORAGE_KEY)
+      if (!raw) return defaultVisibleColIds()
+      const parsed = JSON.parse(raw) as unknown
+      if (!Array.isArray(parsed)) return defaultVisibleColIds()
+      const allowed = new Set(COL_DEFS.map((c) => c.id))
+      const next = parsed.filter((x): x is ColId => typeof x === 'string' && allowed.has(x as ColId))
+      return next.length > 0 ? next : defaultVisibleColIds()
+    } catch {
+      return defaultVisibleColIds()
+    }
+  }
+
+  function saveColumnPrefs(ids: ColId[]) {
+    try {
+      localStorage.setItem(COL_STORAGE_KEY, JSON.stringify(ids))
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  let visibleColIds = $state<ColId[]>(loadColumnPrefs())
+
+  let orderedVisibleCols = $derived(COL_DEFS.filter((c) => visibleColIds.includes(c.id)))
+
+  $effect(() => {
+    saveColumnPrefs(visibleColIds)
+  })
+
+  function resetColumnsToDefault() {
+    visibleColIds = [...defaultVisibleColIds()]
+  }
 
   function dateShort(v: string | null | undefined) {
     if (!v) return ''
     return v.length >= 10 ? v.slice(0, 10) : v
   }
 
-  let membersTotalPagesValue = 1
-  $: {
-    const pages = Math.ceil($membersTotal / $membersPageSize)
-    membersTotalPagesValue = pages > 0 ? pages : 1
+  function cellValue(m: NetxpMember, id: ColId): string {
+    switch (id) {
+      case 'active':
+        return m.is_active ? 'yes' : 'no'
+      case 'geburtsdatum':
+      case 'eintrittsdatum':
+      case 'austrittsdatum':
+      case 'first_seen_at':
+      case 'last_seen_at':
+      case 'inactive_since':
+        return dateShort(m[id])
+      default: {
+        const v = m[id as keyof NetxpMember]
+        return v == null || v === '' ? '' : String(v)
+      }
+    }
   }
 
-  let syncLoading = false
-  let syncError: string | null = null
-  let syncStatus: string | null = null
-  let syncRunId: string | null = null
-  let syncNotes: string | null = null
-  let syncCounts = { inserted: 0, updated: 0, unchanged: 0, inactivated: 0, error: 0 }
+  let netxpMembersTotalPagesValue = $derived(
+    Math.max(1, Math.ceil($netxpMembersTotal / $netxpMembersPageSize))
+  )
+
+  let syncLoading = $state(false)
+  let syncError = $state<string | null>(null)
+  let syncStatus = $state<string | null>(null)
+  let syncRunId = $state<string | null>(null)
+  let syncNotes = $state<string | null>(null)
+  let syncCounts = $state({
+    inserted: 0,
+    updated: 0,
+    unchanged: 0,
+    inactivated: 0,
+    error: 0
+  })
   let syncAbort: AbortController | null = null
 
   onDestroy(() => {
@@ -43,7 +161,7 @@
   async function runFetch() {
     const t = get(token)
     if (!t) return
-    await fetchMembers(t)
+    await fetchNetxpMembers(t)
   }
 
   async function startNetxpSync() {
@@ -194,17 +312,17 @@
   }
 
   async function doSearch() {
-    membersPage.set(1)
+    netxpMembersPage.set(1)
     await runFetch()
   }
 
   async function doPrev() {
-    membersPage.set($membersPage - 1)
+    netxpMembersPage.set($netxpMembersPage - 1)
     await runFetch()
   }
 
   async function doNext() {
-    membersPage.set($membersPage + 1)
+    netxpMembersPage.set($netxpMembersPage + 1)
     await runFetch()
   }
 </script>
@@ -228,7 +346,7 @@
     <label>
       Search
       <input
-        bind:value={$membersSearch}
+        bind:value={$netxpMembersSearch}
         type="text"
         placeholder="name, netxp_id, member number"
       />
@@ -236,20 +354,37 @@
 
     <label>
       Active only
-      <input bind:checked={$membersActiveOnly} type="checkbox" />
+      <input
+        type="checkbox"
+        checked={$netxpMembersActiveOnly}
+        onchange={(e) => netxpMembersActiveOnly.set(e.currentTarget.checked)}
+      />
     </label>
+
+    <label>
+      Current members (by Austrittsdatum)
+      <input
+        type="checkbox"
+        checked={$netxpMembersCurrentOnly}
+        onchange={(e) => netxpMembersCurrentOnly.set(e.currentTarget.checked)}
+      />
+    </label>
+    <p class={pageStyles.filterNote}>
+      When enabled: only people with <strong>no</strong> exit date, or an exit date <strong>after today</strong>
+      (still in the club according to that field). Past exit dates are excluded.
+    </p>
 
     <div class={commonStyles.row}>
       <button
         class={commonStyles.btnPrimary}
-        disabled={$membersLoading}
+        disabled={$netxpMembersLoading}
         onclick={doSearch}
       >
         Search
       </button>
       <button
         class={commonStyles.btnSecondary}
-        disabled={$membersLoading}
+        disabled={$netxpMembersLoading}
         onclick={runFetch}
       >
         Refresh
@@ -259,7 +394,7 @@
     <div class={commonStyles.row}>
       <button
         class={commonStyles.btnSecondary}
-        disabled={syncLoading || $membersLoading}
+        disabled={syncLoading || $netxpMembersLoading}
         onclick={startNetxpSync}
       >
         {syncLoading ? 'Syncing NetXP...' : 'Import/Update from NetXP'}
@@ -286,68 +421,51 @@
       {/if}
     {/if}
 
-    {#if $membersError}
-      <p class={`${commonStyles.message} ${commonStyles.error}`}>{$membersError}</p>
+    {#if $netxpMembersError}
+      <p class={`${commonStyles.message} ${commonStyles.error}`}>{$netxpMembersError}</p>
     {/if}
 
-    {#if $membersLoading}
+    <details class={pageStyles.columnPanel}>
+      <summary>Table columns</summary>
+      <p class={`${commonStyles.muted} ${pageStyles.columnHint}`}>
+        Shown by default: membership and contact fields. Turn on extra columns when you need sync metadata,
+        internal ids, registration codes, or long info text. Your choices are saved in this browser.
+      </p>
+      <div class={pageStyles.columnActions}>
+        <button type="button" class={commonStyles.btnSecondary} onclick={resetColumnsToDefault}>
+          Reset to defaults
+        </button>
+      </div>
+      <div class={pageStyles.columnGrid}>
+        {#each COL_DEFS as col}
+          <label>
+            <input type="checkbox" bind:group={visibleColIds} value={col.id} />
+            {col.label}
+          </label>
+        {/each}
+      </div>
+    </details>
+
+    {#if $netxpMembersLoading}
       <p class={commonStyles.muted}>Loading...</p>
     {/if}
 
-    {#if !$membersLoading && $membersItems.length > 0}
+    {#if !$netxpMembersLoading && $netxpMembersItems.length > 0}
       <div class={commonStyles.tableFrame}>
         <table>
           <thead>
             <tr>
-              <th>id</th>
-              <th>netxp_id</th>
-              <th>active</th>
-              <th>first_seen_at</th>
-              <th>last_seen_at</th>
-              <th>inactive_since</th>
-              <th>mitgliedsnummer</th>
-              <th>vorname</th>
-              <th>nachname</th>
-              <th>geburtsdatum</th>
-              <th>eintrittsdatum</th>
-              <th>austrittsdatum</th>
-              <th>mitgliedsart</th>
-              <th>strasse</th>
-              <th>plz</th>
-              <th>ort</th>
-              <th>telefon_privat</th>
-              <th>telefon_arbeit</th>
-              <th>email_privat</th>
-              <th>nx_ssp_registration_code</th>
-              <th>beitragsnamen</th>
-              <th>info</th>
+              {#each orderedVisibleCols as col}
+                <th>{col.label}</th>
+              {/each}
             </tr>
           </thead>
           <tbody>
-            {#each $membersItems as m}
+            {#each $netxpMembersItems as m}
               <tr>
-                <td>{m.id}</td>
-                <td>{m.netxp_id}</td>
-                <td>{m.is_active ? 'yes' : 'no'}</td>
-                <td>{dateShort(m.first_seen_at)}</td>
-                <td>{dateShort(m.last_seen_at)}</td>
-                <td>{dateShort(m.inactive_since)}</td>
-                <td>{m.mitgliedsnummer ?? ''}</td>
-                <td>{m.vorname ?? ''}</td>
-                <td>{m.nachname ?? ''}</td>
-                <td>{dateShort(m.geburtsdatum)}</td>
-                <td>{dateShort(m.eintrittsdatum)}</td>
-                <td>{dateShort(m.austrittsdatum)}</td>
-                <td>{m.mitgliedsart ?? ''}</td>
-                <td>{m.strasse ?? ''}</td>
-                <td>{m.plz ?? ''}</td>
-                <td>{m.ort ?? ''}</td>
-                <td>{m.telefon_privat ?? ''}</td>
-                <td>{m.telefon_arbeit ?? ''}</td>
-                <td>{m.email_privat ?? ''}</td>
-                <td>{m.nx_ssp_registration_code ?? ''}</td>
-                <td>{m.beitragsnamen ?? ''}</td>
-                <td>{m.info ?? ''}</td>
+                {#each orderedVisibleCols as col}
+                  <td>{cellValue(m, col.id)}</td>
+                {/each}
               </tr>
             {/each}
           </tbody>
@@ -357,14 +475,14 @@
       <div class={commonStyles.paginationRow}>
         <button
           class={commonStyles.btnSecondary}
-          disabled={$membersLoading || $membersPage <= 1}
+          disabled={$netxpMembersLoading || $netxpMembersPage <= 1}
           onclick={doPrev}
         >
           Prev
         </button>
         <button
           class={commonStyles.btnSecondary}
-          disabled={$membersLoading || $membersPage >= membersTotalPagesValue}
+          disabled={$netxpMembersLoading || $netxpMembersPage >= netxpMembersTotalPagesValue}
           onclick={doNext}
         >
           Next
@@ -372,10 +490,10 @@
       </div>
 
       <p class={commonStyles.muted}>
-        Page {$membersPage} / {membersTotalPagesValue} (Total {$membersTotal})
+        Page {$netxpMembersPage} / {netxpMembersTotalPagesValue} (Total {$netxpMembersTotal})
       </p>
-    {:else if !$membersLoading && !$membersError}
-      <p class={commonStyles.muted}>No members found.</p>
+    {:else if !$netxpMembersLoading && !$netxpMembersError}
+      <p class={commonStyles.muted}>No NetXP members found.</p>
     {/if}
   </section>
 {/if}
