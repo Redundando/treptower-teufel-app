@@ -5,7 +5,7 @@ Workflows live in **`.github/workflows/`**.
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | **Deploy staging** | Manual (**Actions → Run workflow**) | SSH to server → `git pull main` in staging repo → `scripts/deploy-remote-staging.sh` |
-| **Deploy production** | Push tag **`v*.*.*`** (e.g. `v0.1.0`) | SSH → `GIT_REF=<tag>` → `scripts/deploy-remote-prod.sh` on **`/srv/tttc/prod`** (same as local **`deploy-prod.ps1`**) |
+| **Deploy production** | Push tag **`v*.*.*`** *or* manual (**Run workflow** with **git ref** input, e.g. `main`) | SSH → `GIT_REF=<tag or input>` → `scripts/deploy-remote-prod.sh` on **`/srv/tttc/prod`** (same as local **`deploy-prod.ps1`**) |
 
 ---
 
@@ -32,7 +32,8 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 | Push + SSH staging (no GitHub) | `.\scripts\deploy-staging.ps1` |
 | Push + trigger staging workflow | `.\scripts\deploy-staging.ps1 -UseGitHub` (needs **`gh`** CLI logged in) |
 | Release prod (new tag + CI) | `.\scripts\release-prod.ps1` or `.\scripts\release-prod.ps1 0.1.0` |
-| Deploy prod without new tag | `.\scripts\deploy-prod.ps1 v0.1.2` — SSH runs `deploy-remote-prod.sh` (same as Actions) |
+| Deploy prod without new tag | `.\scripts\deploy-prod.ps1 main` — SSH runs `deploy-remote-prod.sh` (same as Actions **workflow_dispatch**) |
+| Unified SSH entry | `.\scripts\deploy.ps1 -DeployTo staging` · `.\scripts\deploy.ps1 -DeployTo prod -Ref main` |
 
 **Before** manual staging workflow: **`git push origin main`** so the server pulls the commit you want.
 

@@ -104,7 +104,6 @@ Server:
 ## Phase I — Repo script parity
 
 - [x] **`deploy-remote-staging.sh`**, **`deploy-remote-prod.sh`**
-- [x] **`staging-deploy-remote.sh`** → delegates to staging deploy script
 - [x] **`docs/deploy.md`** updated
 
 ---

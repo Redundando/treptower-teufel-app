@@ -46,16 +46,33 @@ We do **not** commit secrets; we do **not** manually edit code on the server. We
 
 ---
 
-## 4. Deploy automation (current)
+## 4. Deploy automation
 
-| What | Where |
-|------|--------|
-| **Staging (SSH from your PC)** | `.\scripts\deploy-staging.ps1` → runs `scripts/deploy-remote-staging.sh` on the server |
-| **Staging (GitHub)** | Workflow **Deploy staging** (manual dispatch); secrets: [github-actions.md](./github-actions.md) |
-| **Production (tag + CI)** | `.\scripts\release-prod.ps1` → push tag → workflow **Deploy production** → `deploy-remote-prod.sh` |
-| **Production (SSH only)** | `.\scripts\deploy-prod.ps1 v0.1.2` — same server work as CI without a new tag |
+### 4.1 Which command when (canonical)
 
-Remote scripts: **`scripts/deploy-remote-staging.sh`**, **`scripts/deploy-remote-prod.sh`**. Paths: [server-layout.md](./server-layout.md).
+| I want to… | Command (PowerShell) | Command (Bash) | GitHub Actions |
+|------------|----------------------|----------------|----------------|
+| Deploy **staging** from `main` (push + SSH) | `.\scripts\deploy-staging.ps1` | `./scripts/deploy-staging.sh` | — |
+| Deploy staging **without** pushing first | `.\scripts\deploy-staging.ps1 -SkipPush` | `SKIP_PUSH=1 ./scripts/deploy-staging.sh` | — |
+| Deploy staging via **Actions** (no local SSH) | `.\scripts\deploy-staging.ps1 -UseGitHub` | — | **Deploy staging** → Run workflow |
+| **Release prod** (new semver tag + CI deploy) | `.\scripts\release-prod.ps1` or `.\scripts\release-prod.ps1 0.1.0` | `./scripts/release-prod.sh` | Push tag **`v*.*.*`** → **Deploy production** |
+| **Deploy prod** without a new tag (SSH) | `.\scripts\deploy-prod.ps1 main` or `.\scripts\deploy-prod.ps1 v0.1.2` | `./scripts/deploy-prod.sh main` | **Deploy production** → Run workflow → set **git ref** (same server script as SSH) |
+| **Unified** SSH entry (staging or prod) | `.\scripts\deploy.ps1 -DeployTo staging` · `.\scripts\deploy.ps1 -DeployTo prod -Ref main` | `./scripts/deploy.sh staging` · `./scripts/deploy.sh prod main` | — |
+
+Secrets and workflow details: [github-actions.md](./github-actions.md).
+
+**Prod `GIT_REF`:** Use a **branch** (e.g. `main`) or **tag** (e.g. `v0.1.2`). Omitting the ref on `deploy-prod` deploys the **latest local `v*.*.*` tag**, which may be **behind `main`** — prefer **`main`** or an explicit tag when you need current `main`.
+
+### 4.2 What actually runs on the server
+
+All paths lead to two bash scripts (everything else is a thin wrapper or CI trigger):
+
+| Script | Role |
+|--------|------|
+| **`scripts/deploy-remote-staging.sh`** | Staging: pull `main`, sync `api/` + `web/`, install, build, migrate, restart systemd |
+| **`scripts/deploy-remote-prod.sh`** | Prod: checkout ref, same sync/install/build/migrate/restart |
+
+Paths on disk: [server-layout.md](./server-layout.md).
 
 First-time server setup (clone, venv, env) is still partly **manual**; see §5 and [plan-staging-prod-github-deploy.md](./plan-staging-prod-github-deploy.md).
 

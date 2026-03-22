@@ -26,14 +26,9 @@ jobs:
               echo "No staging repo at /srv/tttc/staging/repo or /srv/tttc/app/repo"
               exit 1
             fi
-            # Ensure repo has the latest deploy script (older clones won't).
+            # Ensure repo has the latest deploy script.
             git fetch origin main
             git checkout main
             git pull origin main
 
-            if [ -f scripts/deploy-remote-staging.sh ]; then
-              bash scripts/deploy-remote-staging.sh
-            else
-              # Fallback for older commits (should be temporary).
-              bash scripts/staging-deploy-remote.sh
-            fi
+            bash scripts/deploy-remote-staging.sh

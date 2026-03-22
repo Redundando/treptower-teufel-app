@@ -39,51 +39,18 @@ Any extra arguments are passed to `ssh` (e.g. `./scripts/ssh-staging.sh -L 8080:
 
 ---
 
-## deploy-staging
+## Deploy (staging, prod, release)
 
-**Push `main`**, then either **SSH** deploy or **GitHub Actions** (manual workflow).
+**Canonical “which command when” table:** [docs/deploy.md §4](../docs/deploy.md#41-which-command-when-canonical).
 
-| Mode | Command |
-|------|---------|
-| SSH (default) | `.\scripts\deploy-staging.ps1` |
-| Same, no push first | `.\scripts\deploy-staging.ps1 -SkipPush` |
-| Trigger **Deploy staging** workflow | `.\scripts\deploy-staging.ps1 -UseGitHub` (needs `gh` CLI + repo secrets; see [docs/github-actions.md](../docs/github-actions.md)) |
+Thin wrappers (SSH from your machine):
 
-**Bash:** `./scripts/deploy-staging.sh` · `SKIP_PUSH=1 ./scripts/deploy-staging.sh`
-
-Server runs **`scripts/deploy-remote-staging.sh`** (staging repo under `/srv/tttc/staging/repo` or legacy `/srv/tttc/app/repo`). See [docs/deploy.md](../docs/deploy.md).
-
----
-
-## release-prod
-
-**Create semver tag + push** → GitHub Actions runs **`scripts/deploy-remote-prod.sh`** on the server (same as **deploy-prod** below, but triggered by the tag push).
-
-Runs **`git fetch origin`** first so the next patch is based on remote tags (use **`-SkipFetch`** to skip). With **no version argument**, the script tags the next **patch** after the highest `v*.*.*` tag (or **`v0.1.0`** if none exist).
-
-```powershell
-.\scripts\release-prod.ps1
-.\scripts\release-prod.ps1 0.1.0
-```
-
-**Bash:** `./scripts/release-prod.sh` · `./scripts/release-prod.sh 0.1.0` · `SKIP_FETCH=1 ./scripts/release-prod.sh`
-
----
-
-## deploy-prod
-
-**One-shot prod deploy over SSH** — runs **`scripts/deploy-remote-prod.sh`** on the server: checkout tag, sync **api** + **web**, **`pip install`**, **`npm install`**, **`npm run build`**, DB migrations, **`systemctl restart`** API + web, and (if passwordless sudo works) **refresh `ops/systemd/*.service`** from the repo.
-
-Use this to redeploy an **existing** tag without creating a new one, or if you prefer not to use GitHub Actions.
-
-```powershell
-.\scripts\deploy-prod.ps1 v0.1.2
-.\scripts\deploy-prod.ps1
-```
-
-No argument → **fetch tags** and deploy the **latest local `v*.*.*` tag** (may be **older than `main`** — use **`.\scripts\deploy-prod.ps1 main`** to ship whatever is on `main` without a new tag).
-
-**Bash:** `./scripts/deploy-prod.sh` · `./scripts/deploy-prod.sh v0.1.2` · `./scripts/deploy-prod.sh main`
+| Script | Purpose |
+|--------|---------|
+| **`deploy-staging.ps1`** / **`deploy-staging.sh`** | Push `main` (optional), run **`deploy-remote-staging.sh`** on the server, or **`-UseGitHub`** to trigger the Actions workflow |
+| **`deploy-prod.ps1`** / **`deploy-prod.sh`** | Run **`deploy-remote-prod.sh`** with a **branch or tag** (e.g. `main`, `v0.1.2`) |
+| **`release-prod.ps1`** / **`release-prod.sh`** | Create semver **tag** + push → CI runs **`deploy-remote-prod.sh`** |
+| **`deploy.ps1`** / **`deploy.sh`** | Single entry: **`-DeployTo staging`** or **`-DeployTo prod -Ref main`** |
 
 ---
 
