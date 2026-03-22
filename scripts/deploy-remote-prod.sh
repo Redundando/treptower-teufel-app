@@ -22,7 +22,12 @@ cd "$REPO_ROOT"
 echo "=== Prod: checkout $GIT_REF ==="
 git fetch origin
 git fetch --tags
-git checkout "$GIT_REF"
+# Branches (e.g. main): must match origin — plain checkout leaves local main stale after fetch.
+if git rev-parse "origin/$GIT_REF" >/dev/null 2>&1; then
+  git checkout -B "$GIT_REF" "origin/$GIT_REF"
+else
+  git checkout "$GIT_REF"
+fi
 
 # Keep systemd units in sync with repo (passwordless sudo only; skip otherwise).
 if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
