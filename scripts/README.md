@@ -81,9 +81,9 @@ Use this to redeploy an **existing** tag without creating a new one, or if you p
 .\scripts\deploy-prod.ps1
 ```
 
-No argument → **fetch tags** and deploy the **latest local `v*.*.*` tag**.
+No argument → **fetch tags** and deploy the **latest local `v*.*.*` tag** (may be **older than `main`** — use **`.\scripts\deploy-prod.ps1 main`** to ship whatever is on `main` without a new tag).
 
-**Bash:** `./scripts/deploy-prod.sh` · `./scripts/deploy-prod.sh v0.1.2`
+**Bash:** `./scripts/deploy-prod.sh` · `./scripts/deploy-prod.sh v0.1.2` · `./scripts/deploy-prod.sh main`
 
 ---
 
