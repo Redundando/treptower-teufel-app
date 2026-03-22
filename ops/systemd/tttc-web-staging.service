@@ -7,11 +7,10 @@ Type=simple
 User=arved
 Group=arved
 WorkingDirectory=/srv/tttc/staging/web
-ExecStart=/usr/bin/npm run preview:staging
+ExecStart=/usr/bin/node node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5173 --strictPort
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=PATH=/srv/tttc/staging/web/node_modules/.bin:/usr/bin:/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target

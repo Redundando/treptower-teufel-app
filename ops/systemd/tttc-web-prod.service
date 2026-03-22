@@ -7,12 +7,11 @@ Type=simple
 User=arved
 Group=arved
 WorkingDirectory=/srv/tttc/prod/web
-ExecStart=/usr/bin/npm run preview:prod
+# Direct node + Vite CLI — avoids `npm run` under systemd (PATH / signal / PID issues).
+ExecStart=/usr/bin/node node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5174 --strictPort
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
-# Include local node_modules/.bin so `vite` resolves (npm run should add this; systemd PATH alone is not enough if deps missing).
-Environment=PATH=/srv/tttc/prod/web/node_modules/.bin:/usr/bin:/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target
