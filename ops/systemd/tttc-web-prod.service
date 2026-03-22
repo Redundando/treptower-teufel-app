@@ -7,10 +7,13 @@ Type=simple
 User=arved
 Group=arved
 WorkingDirectory=/srv/tttc/prod/web
+# Preview serves dist/; deploy runs build, but if dist is missing (manual copy, failed deploy), build once before start.
+ExecStartPre=/bin/bash -c 'cd /srv/tttc/prod/web && [ -f dist/index.html ] || /usr/bin/npm run build'
 # Direct node + Vite CLI — avoids `npm run` under systemd (PATH / signal / PID issues).
 ExecStart=/usr/bin/node node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5174 --strictPort
 Restart=on-failure
 RestartSec=5
+TimeoutStartSec=300
 Environment=NODE_ENV=production
 
 [Install]
