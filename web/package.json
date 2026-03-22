@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "preview:staging": "vite preview --host 0.0.0.0 --port 5173",
-    "preview:prod": "vite preview --host 0.0.0.0 --port 5174"
+    "preview:staging": "node ./node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5173 --strictPort",
+    "preview:prod": "node ./node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port 5174 --strictPort"
   },
   "devDependencies": {
     "@inlang/paraglide-js": "^2.15.1",

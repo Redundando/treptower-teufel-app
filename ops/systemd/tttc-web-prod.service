@@ -11,7 +11,8 @@ ExecStart=/usr/bin/npm run preview:prod
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=PATH=/usr/bin:/usr/local/bin
+# Include local node_modules/.bin so `vite` resolves (npm run should add this; systemd PATH alone is not enough if deps missing).
+Environment=PATH=/srv/tttc/prod/web/node_modules/.bin:/usr/bin:/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target

@@ -11,7 +11,7 @@ ExecStart=/usr/bin/npm run preview:staging
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=PATH=/usr/bin:/usr/local/bin
+Environment=PATH=/srv/tttc/staging/web/node_modules/.bin:/usr/bin:/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target
