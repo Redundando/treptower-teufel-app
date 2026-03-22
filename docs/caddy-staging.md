@@ -146,6 +146,35 @@ api.treptower-teufel.de {
 
 Then `caddy validate` and `systemctl reload caddy`.
 
+### 8.1 X-Robots-Tag (optional, step 3)
+
+The web app also sets `<meta name="robots" content="noindex, nofollow">` and serves **`/robots.txt`** (`Disallow: /`). To add an HTTP header on **every response** from Caddy (including the API hostnames), put this **inside each site block** you care about (`staging-app`, `staging-api`, `app`, `api`, …):
+
+```caddyfile
+	header X-Robots-Tag "noindex, nofollow"
+```
+
+Example — staging app:
+
+```caddyfile
+staging-app.treptower-teufel.de {
+	header X-Robots-Tag "noindex, nofollow"
+	handle_path /api/* {
+		reverse_proxy localhost:8000
+	}
+	reverse_proxy localhost:5173
+}
+```
+
+After editing **`/etc/caddy/Caddyfile`**:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Verify: `curl -sI https://app.treptower-teufel.de/ | grep -i x-robots`
+
 ---
 
 ## 9. Caddy service

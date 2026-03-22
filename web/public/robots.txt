@@ -1,0 +1,3 @@
+# Site should not be indexed; polite crawlers check this file.
+User-agent: *
+Disallow: /
