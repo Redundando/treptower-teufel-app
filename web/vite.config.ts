@@ -28,7 +28,12 @@ export default defineConfig({
   preview: {
     port: 5173,
     host: '0.0.0.0',
-    allowedHosts: ['staging-app.treptower-teufel.de', 'localhost', '127.0.0.1'],
+    allowedHosts: [
+      'staging-app.treptower-teufel.de',
+      'app.treptower-teufel.de',
+      'localhost',
+      '127.0.0.1',
+    ],
     // Match dev server: same-origin `/api/*` → backend (query string preserved).
     proxy: {
       '/api': {

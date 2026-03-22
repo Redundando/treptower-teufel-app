@@ -24,6 +24,20 @@ git fetch origin
 git fetch --tags
 git checkout "$GIT_REF"
 
+# Keep systemd units in sync with repo (passwordless sudo only; skip otherwise).
+if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+  for u in tttc-api-prod tttc-web-prod; do
+    src="$REPO_ROOT/ops/systemd/${u}.service"
+    if [ -f "$src" ]; then
+      echo "=== Installing systemd unit $u from repo ==="
+      sudo cp "$src" /etc/systemd/system/
+    fi
+  done
+  sudo systemctl daemon-reload
+else
+  echo "=== Skipping systemd unit sync (no passwordless sudo) ==="
+fi
+
 if [ ! -d "$APP_ROOT/api/.venv" ]; then
   echo "Missing $APP_ROOT/api/.venv — provision prod api once (venv + pip install -e .)."
   exit 1

@@ -52,7 +52,8 @@ We do **not** commit secrets; we do **not** manually edit code on the server. We
 |------|--------|
 | **Staging (SSH from your PC)** | `.\scripts\deploy-staging.ps1` → runs `scripts/deploy-remote-staging.sh` on the server |
 | **Staging (GitHub)** | Workflow **Deploy staging** (manual dispatch); secrets: [github-actions.md](./github-actions.md) |
-| **Production** | Push semver tag → workflow **Deploy production**; local helper `.\scripts\release-prod.ps1` (auto patch) or `.\scripts\release-prod.ps1 0.1.0` |
+| **Production (tag + CI)** | `.\scripts\release-prod.ps1` → push tag → workflow **Deploy production** → `deploy-remote-prod.sh` |
+| **Production (SSH only)** | `.\scripts\deploy-prod.ps1 v0.1.2` — same server work as CI without a new tag |
 
 Remote scripts: **`scripts/deploy-remote-staging.sh`**, **`scripts/deploy-remote-prod.sh`**. Paths: [server-layout.md](./server-layout.md).
 

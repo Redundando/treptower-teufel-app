@@ -57,7 +57,7 @@ Server runs **`scripts/deploy-remote-staging.sh`** (staging repo under `/srv/ttt
 
 ## release-prod
 
-**Semver tag + push** → GitHub deploys **prod** (`/srv/tttc/prod`). Only after prod server is provisioned.
+**Create semver tag + push** → GitHub Actions runs **`scripts/deploy-remote-prod.sh`** on the server (same as **deploy-prod** below, but triggered by the tag push).
 
 Runs **`git fetch origin`** first so the next patch is based on remote tags (use **`-SkipFetch`** to skip). With **no version argument**, the script tags the next **patch** after the highest `v*.*.*` tag (or **`v0.1.0`** if none exist).
 
@@ -67,6 +67,23 @@ Runs **`git fetch origin`** first so the next patch is based on remote tags (use
 ```
 
 **Bash:** `./scripts/release-prod.sh` · `./scripts/release-prod.sh 0.1.0` · `SKIP_FETCH=1 ./scripts/release-prod.sh`
+
+---
+
+## deploy-prod
+
+**One-shot prod deploy over SSH** — runs **`scripts/deploy-remote-prod.sh`** on the server: checkout tag, sync **api** + **web**, **`pip install`**, **`npm install`**, **`npm run build`**, DB migrations, **`systemctl restart`** API + web, and (if passwordless sudo works) **refresh `ops/systemd/*.service`** from the repo.
+
+Use this to redeploy an **existing** tag without creating a new one, or if you prefer not to use GitHub Actions.
+
+```powershell
+.\scripts\deploy-prod.ps1 v0.1.2
+.\scripts\deploy-prod.ps1
+```
+
+No argument → **fetch tags** and deploy the **latest local `v*.*.*` tag**.
+
+**Bash:** `./scripts/deploy-prod.sh` · `./scripts/deploy-prod.sh v0.1.2`
 
 ---
 
